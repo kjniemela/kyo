@@ -31,7 +31,27 @@ class Game {
       this.isGoldsTurn = !this.isGoldsTurn;
       this.boardState = state;
       this.sendTo(this.isGoldsTurn, { update: [['passTurn', [this.boardState]]] });
+      this.checkWinConditions();
     }
+  }
+
+  checkWinConditions() {
+    let [redKing, goldKing, redEnergy, goldEnergy] = [false, false, false, false];
+    for (const row of this.boardState) {
+      for (const tile of row) {
+        for (const pawn of tile) {
+          if (pawn.type === 'king') {
+            if (pawn.isGold) goldKing = true;
+            else redKing = true;
+          } else if (pawn.isEnergy) {
+            if (pawn.isGold) goldEnergy = true;
+            else redEnergy = true;
+          }
+        }
+      }
+    }
+    if (!(redKing && redEnergy)) this.win(true);
+    else if (!(goldKing && goldEnergy)) this.win(false);
   }
 
   win(isGold) {

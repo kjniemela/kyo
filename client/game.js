@@ -74,19 +74,21 @@ class Tile {
 
           let suspendedSelectedTopPawn = null
           let suspendedTopPawn = null
-          if (topChip && !selectedTopChip.isEnergy && topChip.isEnergy) {
-            suspendedSelectedTopPawn = selectedTile.popPawn()
-            suspendedSelectedTopPawn.lift()
-          } else if (topChip && selectedTopChip.isEnergy && !topChip.isEnergy) {
-            suspendedTopPawn = this.popPawn()
-            suspendedTopPawn.lift()
-          } else if (topChip && !selectedTopChip.isEnergy && !topChip.isEnergy) {
-            if (e.ctrlKey) {
+          if (!didStrike) {
+            if (topChip && !selectedTopChip.isEnergy && topChip.isEnergy) {
               suspendedSelectedTopPawn = selectedTile.popPawn()
-              suspendedSelectedTopPawn.unlift()
+              suspendedSelectedTopPawn.lift()
+            } else if (topChip && selectedTopChip.isEnergy && !topChip.isEnergy) {
               suspendedTopPawn = this.popPawn()
               suspendedTopPawn.lift()
-            } else return
+            } else if (topChip && !selectedTopChip.isEnergy && !topChip.isEnergy) {
+              if (e.ctrlKey) {
+                suspendedSelectedTopPawn = selectedTile.popPawn()
+                suspendedSelectedTopPawn.unlift()
+                suspendedTopPawn = this.popPawn()
+                suspendedTopPawn.lift()
+              } else return
+            }
           }
 
           const movedPawns = []
@@ -202,7 +204,7 @@ class Tile {
     const pawnCount = this.pawnStack.length;
     for (let i = 0; i < pawnCount; i++) {
       const poppedPawn = this.popPawn()
-      if (isStrike && poppedPawn instanceof Shield) {
+      if (isStrike && poppedPawn instanceof Shield && i === 0) {
         return this.pawnStack.length === 0
       }
     }
@@ -370,6 +372,30 @@ class King extends Pawn {
   }
 }
 
+function checkWinConditions() {
+  let [redKing, goldKing, redEnergy, goldEnergy] = [false, false, false, false]
+  for (const row of tiles) {
+    for (const tile of row) {
+      for (const pawn of tile.pawnStack) {
+        if (pawn instanceof King) {
+          if (pawn.isGold) goldKing = true
+          else redKing = true
+        } else if (pawn instanceof Energy) {
+          if (pawn.isGold) goldEnergy = true
+          else redEnergy = true
+        }
+      }
+    }
+  }
+  if (!(redKing && redEnergy)) gameOver(true)
+  else if (!(goldKing && goldEnergy)) gameOver(false)
+}
+
+function gameOver(goldWon) {
+  isGoldsTurn === null
+  document.getElementById('turn').innerText = `${goldWon ? 'Gold' : 'Red'} has won!`
+}
+
 function passTurn() {
   if (isRemoteGame && localIsGold === isGoldsTurn) {
     pushBoardState()
@@ -380,6 +406,9 @@ function passTurn() {
   hasMoved = false
   hasShuffled = false
   document.getElementById('turn').innerText = `${isGoldsTurn ? 'Gold' : 'Red'} is taking their turn...`
+  if (!isRemoteGame) {
+    checkWinConditions()
+  }
 }
 
 function pushBoardState() {
@@ -437,6 +466,14 @@ function onSocketMsg(data) {
         case 'passTurn':
           applyBoardState(args[0])
           passTurn()
+          break
+        case 'gameWon':
+          isGoldsTurn === null
+          document.getElementById('turn').innerText = `You have won!`
+          break
+        case 'gameLost':
+          isGoldsTurn === null
+          document.getElementById('turn').innerText = `You have lost!`
           break
       }
     }
@@ -583,10 +620,10 @@ function resetBoard() {
   /* Add Pawns */
   // Light & Heavy Pawns
   for (let i = 0; i < 4; i++) {
-    // tiles[1][i].pushPawn(new LightPawn(true))
-    // tiles[8][i].pushPawn(new LightPawn(false))
-    // tiles[1][9-i].pushPawn(new LightPawn(true))
-    // tiles[8][9-i].pushPawn(new LightPawn(false))
+    tiles[1][i].pushPawn(new LightPawn(true))
+    tiles[8][i].pushPawn(new LightPawn(false))
+    tiles[1][9-i].pushPawn(new LightPawn(true))
+    tiles[8][9-i].pushPawn(new LightPawn(false))
     tiles[0][i].pushPawn(new HeavyPawn(true))
     tiles[9][i].pushPawn(new HeavyPawn(false))
     tiles[0][9-i].pushPawn(new HeavyPawn(true))
