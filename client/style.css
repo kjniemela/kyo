@@ -1,0 +1,83 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: gray;
+}
+
+.header {
+  margin: 10px;
+  padding: 20px;
+  border: 1px solid black;
+  border-radius: 5px;
+  background-color: antiquewhite;
+}
+
+.btn {
+  padding: 8px;
+  border: none;
+  border-radius: 5px;
+  background-color: dodgerblue;
+  color: whitesmoke;
+}
+
+.btn:hover {
+  background-color: rgb(52, 154, 255);
+}
+
+.btn:active {
+  background-color: rgb(17, 123, 228);
+}
+
+#game {
+  display: flex;
+  padding: 10px;
+}
+
+#board {
+
+}
+
+.boardRow {
+  display: flex;
+  flex-direction: row;
+}
+
+.boardTile {
+  width: min(5vw, 8vh);
+  height: min(5vw, 8vh);
+  padding: 1%;
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.darkTile {
+  background-color: rgb(81, 47, 33);
+}
+
+.lightTile {
+  background-color: rgb(209, 190, 144);
+}
+
+.chipContainer {
+  display: flex;
+  flex-direction: column-reverse;
+  height: 9%;
+  position: relative;
+}
+
+.pawn {
+  position: relative;
+  z-index: 2;
+  width: 80%;
+  margin: 5% 10%;
+}
+
+.lifted {
+  bottom: 10px;
+}
+
+/* .king {
+  bottom: 5%;
+} */
