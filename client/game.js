@@ -9,6 +9,9 @@ const config = {
   allowUndo: false,
 }
 
+const socket = new WebSocket(`wss://hmi.dynu.net/kyo`)
+const isRemoteGame = false
+
 class Tile {
   constructor(tileDiv, x, y) {
     this.tileDiv = tileDiv
@@ -261,6 +264,54 @@ function passTurn() {
   document.getElementById('turn').innerText = `${isGoldsTurn ? 'Gold' : 'Red'} is taking their turn...`
 }
 
+function onSocketMsg(data) {
+  if (data.update) {
+    for (const [update, args] of data.update) {
+      console.log(update, args)
+      switch (update) {
+        
+      }
+    }
+  }
+  if (data.error) {
+    for (const [error, args] of data.error) {
+      console.log(error, args)
+      switch (error) {
+        case 'loginRequired':
+          setUsername()
+          sendActions([args])
+          break
+        case 'disconnectRequired':
+          if (confirm('Must disconnect from game to complete action. OK to disconnect?')) {
+            disconnectFromGame()
+            sendActions([args])
+          }
+          break
+      }
+    }
+  }
+}
+
+function sendActions(actions) {
+  socket.send(JSON.stringify({
+    action: actions,
+  }))
+}
+
+function connectToGame() {
+  const gameID = prompt('Game ID?')
+  sendActions([['connect', [gameID]]])
+}
+
+function disconnectFromGame() {
+  sendActions([['disconnect', []]])
+}
+
+function setUsername() {
+  const username = prompt('Username?')
+  sendActions([['login', [username]]])
+}
+
 function resetBoard() {
   const board = document.getElementById('board')
   board.innerHTML = ''
@@ -386,4 +437,15 @@ function resetBoard() {
   tiles[9][4].pushPawn(new King(false))
 
   passTurn()
+}
+
+socket.onmessage = (event) => {
+  let data
+  try {
+    data = JSON.parse(event.data)
+  } catch (err) {
+    console.error('Bad JSON recieved from server')
+    return
+  }
+  onSocketMsg(data)
 }
