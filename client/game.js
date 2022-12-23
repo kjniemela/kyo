@@ -64,10 +64,11 @@ class Tile {
           }
 
           let didStrike = false
-          if (this.pawnStack.length > 0 && topChip?.isGold === !selectedTopChip?.isGold) {
-            this.clear(true)
+          if (this.pawnStack.length > 0 && (topChip?.isGold === !selectedTopChip?.isGold || topChip instanceof Shield)) {
+            if (!this.clear(true)) return selectedTile.deselect(true)
             didStrike = true
           }
+
 
           let suspendedTopPawn = null
           if (topChip && selectedTopChip.isEnergy && !topChip.isEnergy) {
@@ -162,11 +163,11 @@ class Tile {
     return false
   }
   
-  deselect() {
+  deselect(forcePassTurn=false) {
     this.liftCount = 0
     this.pawnStack.forEach(pawn => pawn.unlift())
     selectedTile = null
-    if (path.length > 0) {
+    if (path.length > 0 || forcePassTurn) {
       passTurn()
     }
     path = []
@@ -175,8 +176,12 @@ class Tile {
   clear(isStrike=false) {
     const pawnCount = this.pawnStack.length;
     for (let i = 0; i < pawnCount; i++) {
-      this.popPawn()
+      const poppedPawn = this.popPawn()
+      if (isStrike && poppedPawn instanceof Shield) {
+        return this.pawnStack.length === 0
+      }
     }
+    return true
   }
 
   pushPawn(pawn) {
