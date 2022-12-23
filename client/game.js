@@ -46,7 +46,9 @@ class Tile {
         !isReturning &&
         !topChip.isEnergy &&
         !selectedTopChip?.isEnergy &&
-        topChip.isGold === selectedTopChip?.isGold
+        topChip.isGold === selectedTopChip?.isGold &&
+        !hasMoved &&
+        !e.ctrlKey
       ) {
         selectedTile.deselect()
       } else {
@@ -69,11 +71,21 @@ class Tile {
             didStrike = true
           }
 
-
+          let suspendedSelectedTopPawn = null
           let suspendedTopPawn = null
-          if (topChip && selectedTopChip.isEnergy && !topChip.isEnergy) {
+          if (topChip && !selectedTopChip.isEnergy && topChip.isEnergy) {
+            suspendedSelectedTopPawn = selectedTile.popPawn()
+            suspendedSelectedTopPawn.lift()
+          } else if (topChip && selectedTopChip.isEnergy && !topChip.isEnergy) {
             suspendedTopPawn = this.popPawn()
             suspendedTopPawn.lift()
+          } else if (topChip && !selectedTopChip.isEnergy && !topChip.isEnergy) {
+            if (e.ctrlKey) {
+              suspendedSelectedTopPawn = selectedTile.popPawn()
+              suspendedSelectedTopPawn.unlift()
+              suspendedTopPawn = this.popPawn()
+              suspendedTopPawn.lift()
+            } else return
           }
 
           const movedPawns = []
@@ -87,6 +99,9 @@ class Tile {
 
           if (suspendedTopPawn) {
             this.pushPawn(suspendedTopPawn)
+          }
+          if (suspendedSelectedTopPawn) {
+            selectedTile.pushPawn(suspendedSelectedTopPawn)
           }
 
           if (!isReturning) path.push(selectedTile)
