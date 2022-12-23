@@ -25,18 +25,29 @@ class Tile {
   }
 
   onClick(e) {
+    const topChip = this.pawnStack[this.pawnStack.length-1]
+    const selectedTopChip = selectedTile?.pawnStack[selectedTile?.pawnStack.length-1]
+
     if (isRemoteGame && localIsGold !== isGoldsTurn) {
       return
     }
 
-    if (this.pawnStack.length > 0 && this.pawnStack[this.pawnStack.length-1].isGold !== isGoldsTurn) {
+    if ((
+      (this.pawnStack.length > 0 && topChip.isGold !== isGoldsTurn) || this.pawnStack.length === 0
+    ) && !selectedTile) {
       return
     }
 
     if (selectedTile && !(selectedTile === this)) {
       const isReturning = this === path[path.length-1] && config.allowUndo
-      const topChip = this.pawnStack[this.pawnStack.length-1];
-      if (this.pawnStack.length > 0 && !isReturning && !(topChip && topChip.isEnergy)) {
+      console.log(topChip?.isGold, selectedTopChip?.isGold)
+      if (
+        this.pawnStack.length > 0 &&
+        !isReturning &&
+        !topChip.isEnergy &&
+        !selectedTopChip?.isEnergy &&
+        topChip.isGold === selectedTopChip?.isGold
+      ) {
         selectedTile.deselect()
       } else {
         if (selectedTile.canMoveTo(this.x, this.y)) {
@@ -51,6 +62,19 @@ class Tile {
               hasMoved = true
             }
           }
+
+          let didStrike = false
+          if (this.pawnStack.length > 0 && topChip?.isGold === !selectedTopChip?.isGold) {
+            this.clear(true)
+            didStrike = true
+          }
+
+          let suspendedTopPawn = null
+          if (topChip && selectedTopChip.isEnergy && !topChip.isEnergy) {
+            suspendedTopPawn = this.popPawn()
+            suspendedTopPawn.lift()
+          }
+
           const movedPawns = []
           const selectedPawns = selectedTile.liftCount
           for (let i = 0; i < selectedPawns; i++) {
@@ -59,8 +83,14 @@ class Tile {
           for (let i = selectedPawns - 1; i >= 0; i--) {
             this.pushPawn(movedPawns[i])
           }
+
+          if (suspendedTopPawn) {
+            this.pushPawn(suspendedTopPawn)
+          }
+
           if (!isReturning) path.push(selectedTile)
           selectedTile = this
+          if (didStrike) this.deselect()
           return
         } else {
           if (hasMoved || path.length > 0) {
@@ -107,10 +137,10 @@ class Tile {
     if (lastTile) {
       lastTopChip = lastTile.pawnStack[lastTile.pawnStack.length-1]
     }
+    const topChip = this.pawnStack[this.pawnStack.length-1]
     const newTopChip = this.pawnStack[this.pawnStack.length-this.liftCount-1]
     const isOrthogonal = !(this.x !== x && this.y !== y)
-    console.log(newTopChip, isOrthogonal)
-    if (newTopChip && newTopChip.isEnergy) {
+    if (newTopChip && newTopChip.isEnergy && !topChip.isEnergy) {
       if (lastTile) {
         if (isOrthogonal) {
           return newTopChip.isDark && (
@@ -142,7 +172,7 @@ class Tile {
     path = []
   }
 
-  clear() {
+  clear(isStrike=false) {
     const pawnCount = this.pawnStack.length;
     for (let i = 0; i < pawnCount; i++) {
       this.popPawn()
