@@ -75,9 +75,9 @@ class Tile {
           let suspendedSelectedTopPawn = null
           let suspendedTopPawn = null
           if (!didStrike) {
-            if (topChip && !selectedTopChip.isEnergy && topChip.isEnergy) {
+            if (!selectedTopChip.isEnergy && (!topChip || topChip.isEnergy) && e.ctrlKey) {
               suspendedSelectedTopPawn = selectedTile.popPawn()
-              suspendedSelectedTopPawn.lift()
+              suspendedTopPawn.unlift()
             } else if (topChip && selectedTopChip.isEnergy && !topChip.isEnergy) {
               suspendedTopPawn = this.popPawn()
               suspendedTopPawn.lift()
