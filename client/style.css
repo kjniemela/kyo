@@ -14,6 +14,11 @@ body {
   background-color: antiquewhite;
 }
 
+#turn {
+  display: inline;
+  margin-right: 20px;
+}
+
 .btn {
   padding: 8px;
   border: none;
@@ -76,6 +81,10 @@ body {
 
 .lifted {
   bottom: 10px;
+}
+
+.lifted.bottom {
+  filter: drop-shadow(0 10px 4px rgba(0,0,0,0.5));
 }
 
 /* .king {
