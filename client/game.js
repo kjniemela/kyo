@@ -10,7 +10,8 @@ const config = {
 }
 
 const socket = new WebSocket(`wss://hmi.dynu.net/kyo`)
-const isRemoteGame = false
+let isRemoteGame = false
+let localIsGold = false
 
 class Tile {
   constructor(tileDiv, x, y) {
@@ -24,6 +25,10 @@ class Tile {
   }
 
   onClick(e) {
+    if (isRemoteGame && localIsGold !== isGoldsTurn) {
+      return
+    }
+
     if (this.pawnStack.length > 0 && this.pawnStack[this.pawnStack.length-1].isGold !== isGoldsTurn) {
       return
     }
@@ -137,6 +142,13 @@ class Tile {
     path = []
   }
 
+  clear() {
+    const pawnCount = this.pawnStack.length;
+    for (let i = 0; i < pawnCount; i++) {
+      this.popPawn()
+    }
+  }
+
   pushPawn(pawn) {
     if (this.pawnStack.length === 0) {
       pawn.setBottom(true)
@@ -203,6 +215,12 @@ class Shield extends Chip {
   constructor() {
     super('shield')
   }
+
+  export() {
+    return {
+      type: 'shield',
+    }
+  }
 }
 
 class Energy extends Chip {
@@ -211,6 +229,14 @@ class Energy extends Chip {
     this.isDark = isDark
     this.isGold = isGold
     this.isEnergy = true
+  }
+
+  export() {
+    return {
+      isEnergy: true,
+      isDark: this.isDark,
+      isGold: this.isGold,
+    }
   }
 }
 
@@ -221,8 +247,16 @@ class Pawn extends BoardPiece {
     element.classList.add(type)
     element.src = `assets/pieces/${isGold ? 'gold': 'red'}${type}.png`
     super(element)
+    this.type = type
     this.isGold = isGold
     this.isChip = false
+  }
+
+  export() {
+    return {
+      type: this.type,
+      isGold: this.isGold,
+    }
   }
 }
 
@@ -257,6 +291,9 @@ class King extends Pawn {
 }
 
 function passTurn() {
+  if (isRemoteGame && localIsGold === isGoldsTurn) {
+    pushBoardState()
+  }
   isGoldsTurn = !isGoldsTurn
   selectedTile = null
   path = []
@@ -264,12 +301,62 @@ function passTurn() {
   document.getElementById('turn').innerText = `${isGoldsTurn ? 'Gold' : 'Red'} is taking their turn...`
 }
 
+function pushBoardState() {
+  const state = tiles.map(row => (
+    row.map(tile => (
+      tile.pawnStack.map(pawn => pawn.export())
+    ))
+  ))
+  sendActions([['pushBoardState', [state]]])
+}
+
+const pawnTypeMap = {
+  'lightpawn': LightPawn,
+  'pawn': HeavyPawn,
+  'tower': Tower,
+  'queen': Queen,
+  'king': King,
+}
+
+function applyBoardState(state) {
+  console.log('APPLY STATE')
+  for (let i = 0; i < 10; i++) {
+    for (let j = 0; j < 10; j++) {
+      const updates = state[i][j]
+      const tile = tiles[i][j]
+      tile.clear()
+      console.log(tile)
+      for (const pawn of updates) {
+        console.log(pawn)
+        if (pawn.isEnergy) {
+          tile.pushPawn(new Energy(pawn.isDark, pawn.isGold))
+        } else if (pawn.type === 'shield') {
+          tile.pushPawn(new Shield())
+        } else {
+          tile.pushPawn(new pawnTypeMap[pawn.type](pawn.isGold))
+        }
+      }
+    }
+  }
+}
+
 function onSocketMsg(data) {
   if (data.update) {
     for (const [update, args] of data.update) {
       console.log(update, args)
       switch (update) {
-        
+        case 'connected':
+          isRemoteGame = true
+          localIsGold = args[1]
+          break
+        case 'disconnected':
+          isRemoteGame = false
+          localIsGold = false
+          break
+        case 'passTurn':
+          applyBoardState(args[0])
+          passTurn()
+          break
       }
     }
   }

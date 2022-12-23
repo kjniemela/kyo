@@ -20,6 +20,36 @@ class Game {
       return [false, false];
     }
   }
+
+  sendTo(toGold, data) {
+    if (toGold && this.goldPlayer) this.goldPlayer.send(data);
+    else if (this.redPlayer) this.redPlayer.send(data);
+  }
+
+  pushBoardState(player, state) {
+    if ((player === this.goldPlayer) === this.isGoldsTurn) {
+      this.isGoldsTurn = !this.isGoldsTurn;
+      this.boardState = state;
+      this.sendTo(this.isGoldsTurn, { update: [['passTurn', [this.boardState]]] });
+    }
+  }
+
+  win(isGold) {
+    if (isGold) {
+      this.sendTo(true, { update: [['gameWon', []]] });
+      this.sendTo(false, { update: [['gameLost', []]] });
+    } else {
+      this.sendTo(false, { update: [['gameWon', []]] });
+      this.sendTo(true, { update: [['gameLost', []]] });
+    }
+  }
+
+  forfeit(player) {
+    this.sendTo(true, { update: [['gameForfeit', []]] });
+    this.sendTo(false, { update: [['gameForfeit', []]] });
+    if (player === this.goldPlayer) this.win(false);
+    else this.win(true);
+  }
 }
 
 class Player {
@@ -84,7 +114,7 @@ class Manager {
           if (username) {
             if (args[0] === gameID) break;
             const [success, isGold] = this.connectToGame(player, args[0]);
-            if (success) this.sendTo(ws, { update: [['connect', [args[0], isGold]]] });
+            if (success) this.sendTo(ws, { update: [['connected', [args[0], isGold]]] });
             else player.send({ error: [['connectRefused', [args[0]]]] });
           } else {
             player.send({ error: [['loginRequired', [action, args]]] });
@@ -92,7 +122,9 @@ class Manager {
           break;
         case 'disconnect':
           if (gameID !== null) {
+            this.games[gameID].forfeit(player);
             this.setPlayerData(ws, { gameID: null });
+            delete this.games[gameID];
             player.send({ update: [['disconnected', []]] });
           }
           break;
@@ -103,6 +135,11 @@ class Manager {
             player.send({ update: [['login', [args[0]]]] });
           } else {
             player.send({ error: [['disconnectRequired', [action, args]]] });
+          }
+          break;
+        case 'pushBoardState':
+          if (gameID in this.games) {
+            this.games[gameID].pushBoardState(player, args[0])
           }
           break;
       }
