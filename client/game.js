@@ -1,6 +1,7 @@
 let selectedTile = null
 let path = []
 let hasMoved = false
+let hasShuffled = false
 
 let tiles = []
 let isGoldsTurn = false
@@ -47,13 +48,13 @@ class Tile {
         !topChip.isEnergy &&
         !selectedTopChip?.isEnergy &&
         topChip.isGold === selectedTopChip?.isGold &&
-        !hasMoved &&
+        !(hasMoved || hasShuffled) &&
         !e.ctrlKey
       ) {
         selectedTile.deselect()
       } else {
         if (selectedTile.canMoveTo(this.x, this.y)) {
-          if (hasMoved && !isReturning) return
+          if ((hasMoved || hasShuffled) && !isReturning) return
           if (isReturning) {
             path.pop()
             hasMoved = false
@@ -127,17 +128,26 @@ class Tile {
         this.deselect()
       }
     } else {
-      if (this.liftCount > 0) {
-        this.pawnStack[this.pawnStack.length-this.liftCount].unlift()
+      if (this.liftCount > 0 + Number(e.altKey)) {
+        if (e.altKey && !hasMoved) {
+          const pawn = this.pawnStack.splice(this.pawnStack.length-this.liftCount, 1)[0]
+          pawn.unlift()
+          this.unshiftPawn(pawn)
+          hasShuffled = true
+        } else {
+          this.pawnStack[this.pawnStack.length-this.liftCount].unlift()
+        }
         this.liftCount--
         if (this.liftCount === 0) {
           this.deselect();
         }
+        
       } else {
         this.liftCount = this.pawnStack.length
         this.pawnStack.forEach(pawn => pawn.lift())
       }
     }
+    console.log(this.liftCount)
   }
 
   canMoveTo(x, y) {
@@ -182,7 +192,7 @@ class Tile {
     this.liftCount = 0
     this.pawnStack.forEach(pawn => pawn.unlift())
     selectedTile = null
-    if (path.length > 0 || forcePassTurn) {
+    if (path.length > 0 || forcePassTurn || hasMoved || hasShuffled) {
       passTurn()
     }
     path = []
@@ -216,6 +226,26 @@ class Tile {
     if (this.pawnStack.length === 0) {
       pawn.setBottom(false)
     }
+    if (this.liftCount > 0) {
+      this.liftCount--
+    }
+    return pawn
+  }
+
+  unshiftPawn(pawn) {
+    pawn.setBottom(true)
+    this.pawnStack.unshift(pawn)
+    this.pawnStack[1].setBottom(false)
+    this.tileDiv.prepend(pawn.element)
+    if (pawn.lifted) {
+      this.liftCount++
+    }
+  }
+
+  shiftPawn() {
+    const pawn = this.pawnStack.shift()
+    this.tileDiv.removeChild(pawn.element)
+    pawn.setBottom(false)
     if (this.liftCount > 0) {
       this.liftCount--
     }
@@ -348,6 +378,7 @@ function passTurn() {
   selectedTile = null
   path = []
   hasMoved = false
+  hasShuffled = false
   document.getElementById('turn').innerText = `${isGoldsTurn ? 'Gold' : 'Red'} is taking their turn...`
 }
 
