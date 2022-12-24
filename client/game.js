@@ -513,7 +513,7 @@ function sendActions(actions) {
 }
 
 function connectToGame() {
-  const gameID = prompt('Game ID?')
+  const gameID = prompt('Please enter the ID of the game you want to connect to. If the game does not exist, one will be created - your opponent can then join by entering the same ID.')
   sendActions([['connect', [gameID]]])
   document.getElementById('reset').disabled = true
   document.getElementById('connect').disabled = true
@@ -534,6 +534,38 @@ function setUsername() {
   document.getElementById('switchUser').innerText = 'Switch User'
 }
 
+function toRoman(i) {
+  // really cheap and hacky...
+  return [
+    'I',
+    'II',
+    'III',
+    'IV',
+    'V',
+    'VI',
+    'VI',
+    'VIII',
+    'IX',
+    'X',
+  ][i-1]
+}
+
+function toAlphabet(i) {
+  // really cheap and hacky...
+  return 'ABCDEFGHIJ'[i-1]
+}
+
+function createLabel(i, pos) {
+  const labelDiv = document.createElement('div')
+  labelDiv.classList.add('boardTile')
+  labelDiv.classList.add('boardLabel')
+  labelDiv.classList.add(pos)
+  const label = document.createElement('span')
+  label.innerText = (pos === 'top' || pos === 'bottom') ? toAlphabet(i) : i
+  labelDiv.appendChild(label)
+  return labelDiv
+}
+
 function resetBoard() {
   const board = document.getElementById('board')
   board.innerHTML = ''
@@ -550,8 +582,15 @@ function resetBoard() {
       tileDiv.classList.add('boardTile')
       tileDiv.classList.add((j + i) % 2 ? 'darkTile' : 'lightTile')
       tiles[i].push(new Tile(tileDiv, i, j))
+      if (i === 0) {
+        tileDiv.appendChild(createLabel(j+1, 'top'))
+      } else if (i === 9) {
+        tileDiv.appendChild(createLabel(j+1, 'bottom'))
+      }
       row.appendChild(tileDiv)
     }
+    row.appendChild(createLabel(i+1, 'right'))
+    row.appendChild(createLabel(i+1, 'left'))
     board.appendChild(row)
   }
 

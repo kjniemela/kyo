@@ -4,6 +4,7 @@
 
 body {
   background-color: gray;
+  --tile-size: min(5vw, 7vh);
 }
 
 .header {
@@ -53,20 +54,46 @@ body {
 }
 
 #board {
-
+  background-color: darkgray;
+  padding: var(--tile-size);
+  border-radius: var(--tile-size);
+  border: 5px outset lightgray;
 }
 
 .boardRow {
   display: flex;
   flex-direction: row;
+  position: relative;
 }
 
 .boardTile {
-  width: min(5vw, 8vh);
-  height: min(5vw, 8vh);
-  padding: 1%;
   display: flex;
   flex-direction: column-reverse;
+  position: relative;
+  width: var(--tile-size);
+  height: var(--tile-size);
+  padding: 1%;
+}
+
+.boardLabel {
+  justify-content: center;
+  position: absolute;
+}
+.boardLabel.right {
+  right: calc(0px - var(--tile-size));
+}
+.boardLabel.left {
+  left: calc(0px - var(--tile-size));
+}
+.boardLabel.top {
+  top: calc(0px - var(--tile-size));
+}
+.boardLabel.bottom {
+  bottom: calc(0px - var(--tile-size));
+}
+.boardLabel span {
+  text-align: center;
+  font-size: calc(var(--tile-size) / 2);
 }
 
 .darkTile {
