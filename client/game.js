@@ -41,7 +41,6 @@ class Tile {
 
     if (selectedTile && !(selectedTile === this)) {
       const isReturning = this === path[path.length-1] && config.allowUndo
-      console.log(topChip?.isGold, selectedTopChip?.isGold)
       if (
         this.pawnStack.length > 0 &&
         !isReturning &&
@@ -67,7 +66,9 @@ class Tile {
           }
 
           let didStrike = false
-          if (this.pawnStack.length > 0 && (topChip?.isGold === !selectedTopChip?.isGold || topChip instanceof Shield)) {
+          if (this.pawnStack.length > 0 && ((
+            topChip?.isGold === !selectedTopChip?.isGold && !topChip?.isEnergy
+           ) || (topChip instanceof Shield && !selectedTopChip instanceof Tower))) {
             if (!this.clear(true)) return selectedTile.deselect(true)
             didStrike = true
           }
@@ -77,7 +78,7 @@ class Tile {
           if (!didStrike) {
             if (!selectedTopChip.isEnergy && (!topChip || topChip.isEnergy) && e.ctrlKey) {
               suspendedSelectedTopPawn = selectedTile.popPawn()
-              suspendedTopPawn.unlift()
+              suspendedSelectedTopPawn.unlift()
             } else if (topChip && selectedTopChip.isEnergy && !topChip.isEnergy) {
               suspendedTopPawn = this.popPawn()
               suspendedTopPawn.lift()
@@ -87,7 +88,10 @@ class Tile {
                 suspendedSelectedTopPawn.unlift()
                 suspendedTopPawn = this.popPawn()
                 suspendedTopPawn.lift()
-              } else return
+              } else if (!(topChip instanceof Shield && selectedTopChip instanceof Tower)) {
+                hasMoved = false
+                return
+              }
             }
           }
 
@@ -109,7 +113,7 @@ class Tile {
 
           if (!isReturning) path.push(selectedTile)
           selectedTile = this
-          if (didStrike) this.deselect()
+          if (didStrike || e.ctrlKey) this.deselect()
           return
         } else {
           if (hasMoved || path.length > 0) {
@@ -124,6 +128,9 @@ class Tile {
 
     if (e.shiftKey) {
       if (this.liftCount < this.pawnStack.length) {
+        const pawn = this.pawnStack[this.pawnStack.length-this.liftCount-1]
+        if (pawn.isGold !== isGoldsTurn && !(pawn instanceof Shield)) return
+        if (this.liftCount > topChip.stackLimit) return
         this.liftCount++
         this.pawnStack[this.pawnStack.length-this.liftCount].lift()
       } else {
@@ -131,22 +138,30 @@ class Tile {
       }
     } else {
       if (this.liftCount > 0 + Number(e.altKey)) {
-        if (e.altKey && !hasMoved) {
-          const pawn = this.pawnStack.splice(this.pawnStack.length-this.liftCount, 1)[0]
-          pawn.unlift()
-          this.unshiftPawn(pawn)
-          hasShuffled = true
+        if (e.altKey && ((!hasMoved && path.length === 0) || topChip instanceof Queen)) {
+          let suspendedTopPawn
+          if (!topChip.isEnergy) suspendedTopPawn = this.popPawn()
+          const pawn = this.splicePawn(this.pawnStack.length-this.liftCount)
+          this.pushPawn(pawn)
+          if (suspendedTopPawn) this.pushPawn(suspendedTopPawn)
+          if (!(topChip instanceof Queen)) hasShuffled = true
         } else {
           this.pawnStack[this.pawnStack.length-this.liftCount].unlift()
-        }
-        this.liftCount--
-        if (this.liftCount === 0) {
-          this.deselect();
+          this.liftCount--
+          if (this.liftCount === 0) {
+            this.deselect();
+          }
         }
         
       } else {
-        this.liftCount = this.pawnStack.length
-        this.pawnStack.forEach(pawn => pawn.lift())
+        this.liftCount = 0
+        for (let i = this.pawnStack.length - 1; i >= 0; i--) {
+          const pawn = this.pawnStack[i]
+          if (pawn.isGold !== isGoldsTurn && !(pawn instanceof Shield)) break
+          if (this.liftCount > topChip.stackLimit) break
+          pawn.lift()
+          this.liftCount++
+        }
       }
     }
     console.log(this.liftCount)
@@ -234,21 +249,13 @@ class Tile {
     return pawn
   }
 
-  unshiftPawn(pawn) {
-    pawn.setBottom(true)
-    this.pawnStack.unshift(pawn)
-    this.pawnStack[1].setBottom(false)
-    this.tileDiv.prepend(pawn.element)
-    if (pawn.lifted) {
-      this.liftCount++
-    }
-  }
-
-  shiftPawn() {
-    const pawn = this.pawnStack.shift()
+  splicePawn(index) {
+    const pawn = this.pawnStack.splice(index, 1)[0]
     this.tileDiv.removeChild(pawn.element)
-    pawn.setBottom(false)
-    if (this.liftCount > 0) {
+    if (index === 0) {
+      pawn.setBottom(false)
+    }
+    if (this.liftCount > 0 && pawn.lifted) {
       this.liftCount--
     }
     return pawn
@@ -332,6 +339,7 @@ class Pawn extends BoardPiece {
     this.type = type
     this.isGold = isGold
     this.isChip = false
+    this.stackLimit = 5
   }
 
   export() {
@@ -345,6 +353,7 @@ class Pawn extends BoardPiece {
 class LightPawn extends Pawn {
   constructor(isGold) {
     super('lightpawn', isGold)
+    this.stackLimit = 0
   }
 }
 
