@@ -515,15 +515,23 @@ function sendActions(actions) {
 function connectToGame() {
   const gameID = prompt('Game ID?')
   sendActions([['connect', [gameID]]])
+  document.getElementById('reset').disabled = true
+  document.getElementById('connect').disabled = true
+  document.getElementById('disconnect').disabled = false
 }
 
 function disconnectFromGame() {
   sendActions([['disconnect', []]])
+  document.getElementById('reset').disabled = false
+  document.getElementById('connect').disabled = false
+  document.getElementById('disconnect').disabled = true
 }
 
 function setUsername() {
   const username = prompt('Username?')
   sendActions([['login', [username]]])
+  document.getElementById('user').innerText = `Logged in as ${username}`
+  document.getElementById('switchUser').innerText = 'Switch User'
 }
 
 function resetBoard() {
@@ -652,6 +660,8 @@ function resetBoard() {
 
   passTurn()
 }
+
+socket.onopen = (event) => {}
 
 socket.onmessage = (event) => {
   let data

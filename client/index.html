@@ -6,10 +6,11 @@
   <body>
     <nav class="header">
       <h2 id="turn"></h2>
-      <button class="btn" onclick="resetBoard()">New Game</button>
-      <button class="btn" onclick="connectToGame()">Connect to Game</button>
-      <button class="btn" onclick="disconnectFromGame()">Disconnect</button>
-      <button class="btn" onclick="setUsername()">Switch User</button>
+      <div><button class="btn" id="reset" onclick="resetBoard()">New Local Game</button></div>
+      <div><button class="btn" id="connect" onclick="connectToGame()">Connect to Game</button></div>
+      <div><button class="btn" id="disconnect" disabled onclick="disconnectFromGame()">Disconnect</button></div>
+      <div><button class="btn" id="switchUser" onclick="setUsername()">Login</button></div>
+      <h4 id="user"></h4>
     </nav>
     <div id="game">
       <div id="board">

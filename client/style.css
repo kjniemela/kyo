@@ -7,6 +7,9 @@ body {
 }
 
 .header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin: 10px;
   padding: 20px;
   border: 1px solid black;
@@ -16,7 +19,15 @@ body {
 
 #turn {
   display: inline;
+  margin: 0;
   margin-right: 20px;
+}
+
+#user {
+  display: inline;
+  margin: 0;
+  text-align: right;
+  flex-grow: 1;
 }
 
 .btn {
@@ -26,13 +37,14 @@ body {
   background-color: dodgerblue;
   color: whitesmoke;
 }
-
 .btn:hover {
   background-color: rgb(52, 154, 255);
 }
-
 .btn:active {
   background-color: rgb(17, 123, 228);
+}
+.btn:disabled {
+  background-color: rgb(130, 130, 130);
 }
 
 #game {
