@@ -51,6 +51,7 @@ body {
 #game {
   display: flex;
   padding: 10px;
+  gap: 2%;
 }
 
 #board {
@@ -58,6 +59,28 @@ body {
   padding: var(--tile-size);
   border-radius: var(--tile-size);
   border: 5px outset lightgray;
+}
+
+#sidebar {
+  border: 1px solid black;
+  background-color: whitesmoke;
+  flex-grow: 1;
+}
+
+#turnlog {
+  padding: 0;
+  margin: 10px;
+  list-style-type: none;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.logItem {
+  background-color: goldenrod;
+  padding: 4px 10px;
+}
+.logItem:nth-child(even) {
+  background-color: darkred;
 }
 
 .boardRow {

@@ -6,6 +6,8 @@ let hasShuffled = false
 let tiles = []
 let isGoldsTurn = false
 
+let turnLog = []
+
 const config = {
   allowUndo: false,
 }
@@ -164,7 +166,7 @@ class Tile {
         }
       }
     }
-    console.log(this.liftCount)
+    // console.log(this.liftCount)
   }
 
   canMoveTo(x, y) {
@@ -208,10 +210,10 @@ class Tile {
   deselect(forcePassTurn=false) {
     this.liftCount = 0
     this.pawnStack.forEach(pawn => pawn.unlift())
-    selectedTile = null
     if (path.length > 0 || forcePassTurn || hasMoved || hasShuffled) {
       passTurn()
     }
+    selectedTile = null
     path = []
   }
 
@@ -406,6 +408,11 @@ function gameOver(goldWon) {
 }
 
 function passTurn() {
+  if (selectedTile) {
+    const minPath = path.map(tile => [tile.x, tile.y])
+    minPath.push([selectedTile.x, selectedTile.y])
+    turnLog.push(minPath)
+  }
   if (isRemoteGame && localIsGold === isGoldsTurn) {
     pushBoardState()
   }
@@ -415,6 +422,7 @@ function passTurn() {
   hasMoved = false
   hasShuffled = false
   document.getElementById('turn').innerText = `${isGoldsTurn ? 'Gold' : 'Red'} is taking their turn...`
+  renderTurnLog()
   if (!isRemoteGame) {
     checkWinConditions()
   }
@@ -426,7 +434,7 @@ function pushBoardState() {
       tile.pawnStack.map(pawn => pawn.export())
     ))
   ))
-  sendActions([['pushBoardState', [state]]])
+  sendActions([['pushBoardState', [state, turnLog]]])
 }
 
 const pawnTypeMap = {
@@ -437,16 +445,17 @@ const pawnTypeMap = {
   'king': King,
 }
 
-function applyBoardState(state) {
-  console.log('APPLY STATE')
+function applyBoardState(state, log) {
+  console.log('APPLY STATE', state)
+  turnLog = log
   for (let i = 0; i < 10; i++) {
     for (let j = 0; j < 10; j++) {
       const updates = state[i][j]
       const tile = tiles[i][j]
       tile.clear()
-      console.log(tile)
+      // console.log(tile)
       for (const pawn of updates) {
-        console.log(pawn)
+        // console.log(pawn)
         if (pawn.isEnergy) {
           tile.pushPawn(new Energy(pawn.isDark, pawn.isGold))
         } else if (pawn.type === 'shield') {
@@ -473,7 +482,7 @@ function onSocketMsg(data) {
           localIsGold = false
           break
         case 'passTurn':
-          applyBoardState(args[0])
+          applyBoardState(args[0], args[1])
           passTurn()
           break
         case 'gameWon':
@@ -566,6 +575,17 @@ function createLabel(i, pos) {
   return labelDiv
 }
 
+function renderTurnLog() {
+  const list = document.getElementById('turnlog')
+  list.innerHTML = ''
+  for (const path of turnLog) {
+    const item = document.createElement('li')
+    item.classList.add('logItem')
+    item.innerText = path.map(([x, y]) => `${toAlphabet(x+1)}${y+1}`).join(' → ')
+    list.appendChild(item)
+  }
+}
+
 function resetBoard() {
   const board = document.getElementById('board')
   board.innerHTML = ''
@@ -581,7 +601,7 @@ function resetBoard() {
       const tileDiv = document.createElement('div')
       tileDiv.classList.add('boardTile')
       tileDiv.classList.add((j + i) % 2 ? 'darkTile' : 'lightTile')
-      tiles[i].push(new Tile(tileDiv, i, j))
+      tiles[i].push(new Tile(tileDiv, j, i))
       if (i === 0) {
         tileDiv.appendChild(createLabel(j+1, 'top'))
       } else if (i === 9) {

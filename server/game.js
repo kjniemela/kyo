@@ -4,6 +4,7 @@ class Game {
     this.goldPlayer = null;
     this.redPlayer = null;
     this.boardState = [];
+    this.turnLog = [];
     this.isGoldsTurn = true;
   }
 
@@ -26,11 +27,12 @@ class Game {
     else if (this.redPlayer) this.redPlayer.send(data);
   }
 
-  pushBoardState(player, state) {
+  pushBoardState(player, state, log) {
     if ((player === this.goldPlayer) === this.isGoldsTurn) {
       this.isGoldsTurn = !this.isGoldsTurn;
       this.boardState = state;
-      this.sendTo(this.isGoldsTurn, { update: [['passTurn', [this.boardState]]] });
+      this.turnLog = log;
+      this.sendTo(this.isGoldsTurn, { update: [['passTurn', [this.boardState, this.turnLog]]] });
       this.checkWinConditions();
     }
   }
@@ -159,7 +161,7 @@ class Manager {
           break;
         case 'pushBoardState':
           if (gameID in this.games) {
-            this.games[gameID].pushBoardState(player, args[0])
+            this.games[gameID].pushBoardState(player, args[0], args[1])
           }
           break;
       }
