@@ -13,11 +13,13 @@ class Game {
       this.goldPlayer = player;
       player.setConnData({ gameID: this.id });
       return [true, true];
-    } else if (this.redPlayer === null) {
+    }
+    else if (this.redPlayer === null) {
       this.redPlayer = player;
       player.setConnData({ gameID: this.id });
       return [true, false];
-    } else {
+    }
+    else {
       return [false, false];
     }
   }
@@ -45,7 +47,8 @@ class Game {
           if (pawn.type === 'king') {
             if (pawn.isGold) goldKing = true;
             else redKing = true;
-          } else if (pawn.isEnergy) {
+          }
+          else if (pawn.isEnergy) {
             if (pawn.isGold) goldEnergy = true;
             else redEnergy = true;
           }
@@ -60,7 +63,8 @@ class Game {
     if (isGold) {
       this.sendTo(true, { update: [['gameWon', []]] });
       this.sendTo(false, { update: [['gameLost', []]] });
-    } else {
+    }
+    else {
       this.sendTo(false, { update: [['gameWon', []]] });
       this.sendTo(true, { update: [['gameLost', []]] });
     }
@@ -138,7 +142,8 @@ class Manager {
             const [success, isGold] = this.connectToGame(player, args[0]);
             if (success) this.sendTo(ws, { update: [['connected', [args[0], isGold]]] });
             else player.send({ error: [['connectRefused', [args[0]]]] });
-          } else {
+          }
+          else {
             player.send({ error: [['loginRequired', [action, args]]] });
           }
           break;
@@ -155,7 +160,8 @@ class Manager {
             if (args[0] === username) break;
             this.setPlayerData(ws, { username: args[0] });
             player.send({ update: [['login', [args[0]]]] });
-          } else {
+          }
+          else {
             player.send({ error: [['disconnectRequired', [action, args]]] });
           }
           break;

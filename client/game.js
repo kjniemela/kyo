@@ -55,13 +55,15 @@ class Tile {
         !e.ctrlKey
       ) {
         selectedTile.deselect()
-      } else {
+      }
+      else {
         if (selectedTile.canMoveTo(this.x, this.y)) {
           if ((hasMoved || hasShuffled) && !isReturning) return
           if (isReturning) {
             path.pop()
             hasMoved = false
-          } else {
+          }
+          else {
             const isFreeMove = selectedTile.isFreeMove(this.x, this.y)
             if (!isFreeMove) {
               if (path.length > 0) return
@@ -83,16 +85,19 @@ class Tile {
             if (!selectedTopChip.isEnergy && (!topChip || topChip.isEnergy) && e.ctrlKey) {
               suspendedSelectedTopPawn = selectedTile.popPawn()
               suspendedSelectedTopPawn.unlift()
-            } else if (topChip && selectedTopChip.isEnergy && !topChip.isEnergy) {
+            }
+            else if (topChip && selectedTopChip.isEnergy && !topChip.isEnergy) {
               suspendedTopPawn = this.popPawn()
               suspendedTopPawn.lift()
-            } else if (topChip && !selectedTopChip.isEnergy && !topChip.isEnergy) {
+            }
+            else if (topChip && !selectedTopChip.isEnergy && !topChip.isEnergy) {
               if (e.ctrlKey) {
                 suspendedSelectedTopPawn = selectedTile.popPawn()
                 suspendedSelectedTopPawn.unlift()
                 suspendedTopPawn = this.popPawn()
                 suspendedTopPawn.lift()
-              } else if (!(topChip instanceof Shield && selectedTopChip instanceof Tower)) {
+              }
+              else if (!(topChip instanceof Shield && selectedTopChip instanceof Tower)) {
                 hasMoved = false
                 return
               }
@@ -119,10 +124,12 @@ class Tile {
           selectedTile = this
           if (didStrike || e.ctrlKey) this.deselect()
           return
-        } else {
+        }
+        else {
           if (hasMoved || path.length > 0) {
             return
-          } else {
+          }
+          else {
             selectedTile.deselect()
           }
         }
@@ -137,10 +144,12 @@ class Tile {
         if (this.liftCount > topChip.stackLimit) return
         this.liftCount++
         this.pawnStack[this.pawnStack.length-this.liftCount].lift()
-      } else {
+      }
+      else {
         this.deselect()
       }
-    } else {
+    }
+    else {
       if (this.liftCount > 0 + Number(e.altKey)) {
         if (e.altKey && ((!hasMoved && path.length === 0) || topChip instanceof Queen)) {
           let suspendedTopPawn
@@ -149,7 +158,8 @@ class Tile {
           this.pushPawn(pawn)
           if (suspendedTopPawn) this.pushPawn(suspendedTopPawn)
           if (!(topChip instanceof Queen)) hasShuffled = true
-        } else {
+        }
+        else {
           this.pawnStack[this.pawnStack.length-this.liftCount].unlift()
           this.liftCount--
           if (this.liftCount === 0) {
@@ -157,7 +167,8 @@ class Tile {
           }
         }
         
-      } else {
+      }
+      else {
         this.liftCount = 0
         for (let i = this.pawnStack.length - 1; i >= 0; i--) {
           const pawn = this.pawnStack[i]
@@ -195,14 +206,16 @@ class Tile {
               lastTile.x === x || lastTile.y === y
             )
           )
-        } else {
+        }
+        else {
           return !newTopChip.isDark && (
             lastTopChip.isDark || !(
               lastTile.x === x || lastTile.y === y
             )
           )
         }
-      } else {
+      }
+      else {
         return newTopChip.isDark === isOrthogonal
       }
     }
@@ -285,7 +298,8 @@ class BoardPiece {
   setBottom(state) {
     if (state) {
       this.element.classList.add('bottom')
-    } else {
+    }
+    else {
       this.element.classList.remove('bottom')
     }
   }
@@ -393,7 +407,8 @@ function checkWinConditions() {
         if (pawn instanceof King) {
           if (pawn.isGold) goldKing = true
           else redKing = true
-        } else if (pawn instanceof Energy) {
+        }
+        else if (pawn instanceof Energy) {
           if (pawn.isGold) goldEnergy = true
           else redEnergy = true
         }
@@ -460,9 +475,11 @@ function applyBoardState(state, log) {
         // console.log(pawn)
         if (pawn.isEnergy) {
           tile.pushPawn(new Energy(pawn.isDark, pawn.isGold))
-        } else if (pawn.type === 'shield') {
+        }
+        else if (pawn.type === 'shield') {
           tile.pushPawn(new Shield())
-        } else {
+        }
+        else {
           tile.pushPawn(new pawnTypeMap[pawn.type](pawn.isGold))
         }
       }
@@ -608,7 +625,8 @@ function resetBoard() {
       tiles[i].push(new Tile(tileDiv, j, i))
       if (i === 0) {
         tileDiv[appendFn](createLabel(j, isPlayingGold ? 'bottom' : 'top'))
-      } else if (i === 9) {
+      }
+      else if (i === 9) {
         tileDiv[appendFn](createLabel(j, isPlayingGold ? 'top' : 'bottom'))
       }
       row[appendFn](tileDiv)
