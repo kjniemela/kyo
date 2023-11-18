@@ -4,7 +4,7 @@
 
 body {
   background-color: gray;
-  --tile-size: min(5vw, 7vh);
+  --tile-size: min(5vw, 6.8vh);
 }
 
 .header {
@@ -46,6 +46,30 @@ body {
 }
 .btn:disabled {
   background-color: rgb(130, 130, 130);
+}
+
+#dialogShadow {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  padding: 0 40px;
+  background: #000a;
+}
+
+#dialog {
+  max-width: 600px;
+  margin: 20% auto;
+  padding: 40px;
+  border: 1px solid black;
+  border-radius: 10px;
+  background-color: antiquewhite;
+}
+
+.hidden {
+  display: none;
 }
 
 #game {

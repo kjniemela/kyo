@@ -485,7 +485,7 @@ function applyBoardState(state, log) {
   }
 }
 
-function onSocketMsg(data) {
+async function onSocketMsg(data) {
   if (data.update) {
     for (const [update, args] of data.update) {
       console.log(update, args)
@@ -520,7 +520,7 @@ function onSocketMsg(data) {
       console.log(error, args)
       switch (error) {
         case 'loginRequired':
-          setUsername()
+          await setUsername()
           sendActions([args])
           break
         case 'disconnectRequired':
@@ -540,8 +540,43 @@ function sendActions(actions) {
   }))
 }
 
-function connectToGame() {
-  const gameID = prompt('Please enter the ID of the game you want to connect to. If the game does not exist, one will be created - your opponent can then join by entering the same ID.')
+function dialogPrompt(text, validator) {
+  const dialogShadow = document.getElementById('dialogShadow');
+  const dialog = document.getElementById('dialog');
+
+  const textItem = document.createElement('p');
+  textItem.innerText = text;
+  const inputDiv = document.createElement('div');
+  const inputField = document.createElement('input');
+  const submitBtn = document.createElement('button');
+  const cancelBtn = document.createElement('button');
+  submitBtn.innerText = 'Submit';
+  cancelBtn.innerText = 'Cancel';
+  dialog.innerHTML = '';
+  dialog.appendChild(textItem);
+  inputDiv.appendChild(inputField);
+  inputDiv.appendChild(submitBtn);
+  inputDiv.appendChild(cancelBtn);
+  dialog.appendChild(inputDiv);
+  dialogShadow.classList.remove('hidden');
+
+  return new Promise((resolve, reject) => {
+    submitBtn.onclick = () => {
+      dialogShadow.classList.add('hidden');
+      const value = inputField.value;
+      if (!validator || validator(value)) resolve(value);
+      else reject();
+    };
+    cancelBtn.onclick = () => {
+      dialogShadow.classList.add('hidden');
+      reject();
+    };
+  });
+}
+
+async function connectToGame() {
+  const gameID = await dialogPrompt('Please enter the ID of the game you want to connect to. If the game does not exist, one will be created - your opponent can then join by entering the same ID.')
+  if (!gameID) return;
   sendActions([['connect', [gameID]]])
   document.getElementById('reset').disabled = true
   document.getElementById('connect').disabled = true
@@ -556,10 +591,15 @@ function disconnectFromGame() {
 }
 
 function setUsername() {
-  const username = prompt('Username?')
-  sendActions([['login', [username]]])
-  document.getElementById('user').innerText = `Logged in as ${username}`
-  document.getElementById('switchUser').innerText = 'Switch User'
+  return dialogPrompt('Username?', (v) => !!v)
+  .then((username) => {
+    sendActions([['login', [username]]])
+    document.getElementById('user').innerText = `Logged in as ${username}`
+    document.getElementById('switchUser').innerText = 'Switch User'
+  })
+  .catch(() => {
+    return setUsername()
+  })
 }
 
 function toRoman(i) {
