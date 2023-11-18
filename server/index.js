@@ -39,4 +39,8 @@ wss.on('connection', (ws, req) => {
     console.log('received:', data);
     if (data.action) gameManager.handleActions(ws, data.action);
   });
+
+  ws.on('close', () => {
+    gameManager.disconnect(ws);
+  });
 });

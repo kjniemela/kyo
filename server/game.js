@@ -81,6 +81,19 @@ class Game {
 class Player {
   constructor(connData) {
     this.connData = connData
+    this.pingInterval = setInterval(this.ping.bind(this), 10_000)
+  }
+
+  ping() {
+    const { ws } = this.connData
+    if (ws) {
+      ws.ping()
+    }
+  }
+
+  close() {
+    clearInterval(this.pingInterval);
+    this.pingInterval = null;
   }
 
   setConnData(data) {
@@ -125,6 +138,19 @@ class Manager {
     }));
   }
 
+  disconnect(ws) {
+    const playerIndex = this.connections.indexOf(ws);
+    const player = this.players[playerIndex];
+
+    if (player.connData.gameID) {
+      this.handleActions(ws, [['disconnect']]);
+    }
+
+    player.close();
+    delete this.connections[playerIndex];
+    delete this.players[playerIndex];
+  }
+
   connectToGame(player, gameID) {
     if (!(gameID in this.games)) this.games[gameID] = new Game(gameID);
     return this.games[gameID].connectPlayer(player);
@@ -148,7 +174,7 @@ class Manager {
           }
           break;
         case 'disconnect':
-          if (gameID !== null) {
+          if (gameID !== null && gameID in this.games) {
             this.games[gameID].forfeit(player);
             this.setPlayerData(ws, { gameID: null });
             delete this.games[gameID];
