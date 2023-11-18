@@ -561,7 +561,7 @@ function toRoman(i) {
 
 function toAlphabet(i) {
   // really cheap and hacky...
-  return 'ABCDEFGHIJ'[i-1]
+  return 'ABCDEFGHIJ'[i]
 }
 
 function createLabel(i, pos) {
@@ -581,7 +581,7 @@ function renderTurnLog() {
   for (const path of turnLog) {
     const item = document.createElement('li')
     item.classList.add('logItem')
-    item.innerText = path.map(([x, y]) => `${toAlphabet(x+1)}${y+1}`).join(' → ')
+    item.innerText = path.map(([x, y]) => `${toAlphabet(x)}${y}`).join(' → ')
     list.appendChild(item)
   }
 }
@@ -603,14 +603,14 @@ function resetBoard() {
       tileDiv.classList.add((j + i) % 2 ? 'darkTile' : 'lightTile')
       tiles[i].push(new Tile(tileDiv, j, i))
       if (i === 0) {
-        tileDiv.appendChild(createLabel(j+1, 'top'))
+        tileDiv.appendChild(createLabel(j, 'top'))
       } else if (i === 9) {
-        tileDiv.appendChild(createLabel(j+1, 'bottom'))
+        tileDiv.appendChild(createLabel(j, 'bottom'))
       }
       row.appendChild(tileDiv)
     }
-    row.appendChild(createLabel(i+1, 'right'))
-    row.appendChild(createLabel(i+1, 'left'))
+    row.appendChild(createLabel(i, 'right'))
+    row.appendChild(createLabel(i, 'left'))
     board.appendChild(row)
   }
 
