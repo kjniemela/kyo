@@ -6,6 +6,8 @@ let hasShuffled = false
 let tiles = []
 let isGoldsTurn = false
 
+let isPlayingGold = false
+
 let turnLog = []
 
 const config = {
@@ -593,6 +595,8 @@ function resetBoard() {
   tiles = []
   isGoldsTurn = false
 
+  const appendFn = isPlayingGold ? 'prepend' : 'append'
+
   for (let i = 0; i < 10; i++) {
     const row = document.createElement('div')
     row.classList.add('boardRow')
@@ -603,15 +607,15 @@ function resetBoard() {
       tileDiv.classList.add((j + i) % 2 ? 'darkTile' : 'lightTile')
       tiles[i].push(new Tile(tileDiv, j, i))
       if (i === 0) {
-        tileDiv.appendChild(createLabel(j, 'top'))
+        tileDiv[appendFn](createLabel(j, isPlayingGold ? 'bottom' : 'top'))
       } else if (i === 9) {
-        tileDiv.appendChild(createLabel(j, 'bottom'))
+        tileDiv[appendFn](createLabel(j, isPlayingGold ? 'top' : 'bottom'))
       }
-      row.appendChild(tileDiv)
+      row[appendFn](tileDiv)
     }
-    row.appendChild(createLabel(i, 'right'))
-    row.appendChild(createLabel(i, 'left'))
-    board.appendChild(row)
+    row[appendFn](createLabel(i, 'right'))
+    row[appendFn](createLabel(i, 'left'))
+    board[appendFn](row)
   }
 
   /* Add Gold's Energy */
