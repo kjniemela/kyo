@@ -6,8 +6,6 @@ let hasShuffled = false
 let tiles = []
 let isGoldsTurn = false
 
-let isPlayingGold = false
-
 let turnLog = []
 
 const config = {
@@ -16,7 +14,7 @@ const config = {
 
 const socket = new WebSocket(`wss://hmi.dynu.net/kyo`)
 let isRemoteGame = false
-let localIsGold = false
+let isPlayingGold = false
 
 class Tile {
   constructor(tileDiv, x, y) {
@@ -33,7 +31,7 @@ class Tile {
     const topChip = this.pawnStack[this.pawnStack.length-1]
     const selectedTopChip = selectedTile?.pawnStack[selectedTile?.pawnStack.length-1]
 
-    if (isRemoteGame && localIsGold !== isGoldsTurn) {
+    if (isRemoteGame && isPlayingGold !== isGoldsTurn) {
       return
     }
 
@@ -430,7 +428,7 @@ function passTurn() {
     minPath.push([selectedTile.x, selectedTile.y])
     turnLog.push(minPath)
   }
-  if (isRemoteGame && localIsGold === isGoldsTurn) {
+  if (isRemoteGame && isPlayingGold === isGoldsTurn) {
     pushBoardState()
   }
   isGoldsTurn = !isGoldsTurn
@@ -494,11 +492,13 @@ function onSocketMsg(data) {
       switch (update) {
         case 'connected':
           isRemoteGame = true
-          localIsGold = args[1]
+          isPlayingGold = args[1]
+          resetBoard()
           break
         case 'disconnected':
           isRemoteGame = false
-          localIsGold = false
+          isPlayingGold = false
+          resetBoard()
           break
         case 'passTurn':
           applyBoardState(args[0], args[1])
