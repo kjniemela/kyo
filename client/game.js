@@ -12,6 +12,8 @@ const config = {
   allowUndo: false,
 }
 
+const urlGameId = location.hash.substring(1)
+
 const socket = new WebSocket(`wss://hmi.dynu.net/kyo`)
 let isRemoteGame = false
 let isPlayingGold = false
@@ -490,15 +492,18 @@ async function onSocketMsg(data) {
     for (const [update, args] of data.update) {
       console.log(update, args)
       switch (update) {
+        case 'newGame':
+          await joinNewGame(args[0])
+          break
         case 'connected':
           isRemoteGame = true
           isPlayingGold = args[1]
+          document.getElementById('user').innerText = `Connected as ${isPlayingGold ? 'gold' : 'red'} player`
           resetBoard()
           break
         case 'disconnected':
           isRemoteGame = false
           isPlayingGold = false
-          resetBoard()
           break
         case 'passTurn':
           applyBoardState(args[0], args[1])
@@ -507,10 +512,12 @@ async function onSocketMsg(data) {
         case 'gameWon':
           isGoldsTurn === null
           document.getElementById('turn').innerText = `You have won!`
+          disconnectFromGame()
           break
         case 'gameLost':
           isGoldsTurn === null
           document.getElementById('turn').innerText = `You have lost!`
+          disconnectFromGame()
           break
       }
     }
@@ -519,15 +526,17 @@ async function onSocketMsg(data) {
     for (const [error, args] of data.error) {
       console.log(error, args)
       switch (error) {
-        case 'loginRequired':
-          await setUsername()
-          sendActions([args])
-          break
         case 'disconnectRequired':
           if (confirm('Must disconnect from game to complete action. OK to disconnect?')) {
             disconnectFromGame()
             sendActions([args])
           }
+          break
+        case 'connectRefused':
+          await textDialog([
+            ['p', 'An error occurred whilst connecting to this game - it may already be full, or no longer exists. Try creating a new one.']
+          ])
+          location.href = `https://${location.host}${location.pathname}`;
           break
       }
     }
@@ -540,66 +549,98 @@ function sendActions(actions) {
   }))
 }
 
-function dialogPrompt(text, validator) {
-  const dialogShadow = document.getElementById('dialogShadow');
-  const dialog = document.getElementById('dialog');
+function createElement(type, { classes, attributes, children }) {
+  const el = document.createElement(type);
+  if (classes) {
+    for (const c of classes) {
+      el.classList.add(c);
+    }
+  }
+  if (attributes) {
+    for (const attr in attributes) {
+      el[attr] = attributes[attr];
+    }
+  }
+  if (children) {
+    for (const child of children) {
+      el.appendChild(child);
+    }
+  }
+  return el;
+}
 
-  const textItem = document.createElement('p');
-  textItem.innerText = text;
-  const inputDiv = document.createElement('div');
-  const inputField = document.createElement('input');
-  const submitBtn = document.createElement('button');
-  const cancelBtn = document.createElement('button');
-  submitBtn.innerText = 'Submit';
-  cancelBtn.innerText = 'Cancel';
-  dialog.innerHTML = '';
-  dialog.appendChild(textItem);
-  inputDiv.appendChild(inputField);
-  inputDiv.appendChild(submitBtn);
-  inputDiv.appendChild(cancelBtn);
-  dialog.appendChild(inputDiv);
-  dialogShadow.classList.remove('hidden');
-
+function textDialog(lines) {
   return new Promise((resolve, reject) => {
-    submitBtn.onclick = () => {
-      dialogShadow.classList.add('hidden');
-      const value = inputField.value;
-      if (!validator || validator(value)) resolve(value);
-      else reject();
-    };
-    cancelBtn.onclick = () => {
-      dialogShadow.classList.add('hidden');
-      reject();
-    };
+    const dialogShadow = document.getElementById('dialogShadow');
+    const dialog = document.getElementById('dialog');
+
+    dialog.innerHTML = '';
+    dialog.appendChild(createElement('div', { children: [
+      ...lines.map(([type, text]) => createElement(
+        type,
+        {
+          attributes: { innerText: text },
+        }
+      )),
+      createElement('div', { children: [
+        createElement('button', { classes: ['btn'], attributes: {
+          innerText: 'Ok',
+          onclick: () => {
+            dialogShadow.classList.add('hidden');
+            resolve();
+          },
+        } }),
+      ] }),
+    ] }));
+    
+    dialogShadow.classList.remove('hidden');
   });
 }
 
-async function connectToGame() {
-  const gameID = await dialogPrompt('Please enter the ID of the game you want to connect to. If the game does not exist, one will be created - your opponent can then join by entering the same ID.')
-  if (!gameID) return;
+async function joinNewGame(gameID) {
+  const URL = `https://${location.host}${location.pathname}#${gameID}`;
+
+  await new Promise((resolve, reject) => {
+    const dialogShadow = document.getElementById('dialogShadow');
+    const dialog = document.getElementById('dialog');
+
+    dialog.innerHTML = '';
+    dialog.appendChild(createElement('div', { children: [
+      createElement('p', { attributes: {
+        innerText: 'Send the link below to your opponent to let them join your game:',
+      } }),
+      createElement('blockquote', { attributes: {
+        innerText: URL,
+      } }),
+      createElement('div', { children: [
+        createElement('button', { classes: ['btn'], attributes: {
+          innerText: 'Ok',
+          onclick: () => {
+            dialogShadow.classList.add('hidden');
+            resolve();
+          },
+        } }),
+      ] }),
+    ] }));
+    
+    dialogShadow.classList.remove('hidden');
+  });
+
+  location.href = URL;
   sendActions([['connect', [gameID]]])
-  document.getElementById('reset').disabled = true
+}
+
+function newOnlineGame() {
+  sendActions([['newGame', []]])
   document.getElementById('connect').disabled = true
   document.getElementById('disconnect').disabled = false
 }
 
 function disconnectFromGame() {
   sendActions([['disconnect', []]])
-  document.getElementById('reset').disabled = false
   document.getElementById('connect').disabled = false
   document.getElementById('disconnect').disabled = true
-}
-
-function setUsername() {
-  return dialogPrompt('Username?', (v) => !!v)
-  .then((username) => {
-    sendActions([['login', [username]]])
-    document.getElementById('user').innerText = `Logged in as ${username}`
-    document.getElementById('switchUser').innerText = 'Switch User'
-  })
-  .catch(() => {
-    return setUsername()
-  })
+  location.hash = '';
 }
 
 function toRoman(i) {
@@ -782,7 +823,14 @@ function resetBoard() {
   passTurn()
 }
 
-socket.onopen = (event) => {}
+socket.onopen = (event) => {
+  if (urlGameId) {
+    sendActions([['connect', [urlGameId]]])
+    document.getElementById('reset').disabled = true
+    document.getElementById('connect').disabled = true
+    document.getElementById('disconnect').disabled = false
+  }
+}
 
 socket.onmessage = (event) => {
   let data

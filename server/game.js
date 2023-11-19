@@ -1,3 +1,5 @@
+const crypto = require('crypto');
+
 class Game {
   constructor(id) {
     this.id = id;
@@ -76,6 +78,11 @@ class Game {
     if (player === this.goldPlayer) this.win(false);
     else this.win(true);
   }
+
+  close() {
+    if (this.goldPlayer) this.goldPlayer.connData.gameID = null;
+    if (this.redPlayer) this.redPlayer.connData.gameID = null;
+  }
 }
 
 class Player {
@@ -133,7 +140,6 @@ class Manager {
     this.connections.push(ws);
     this.players.push(new Player({
       ws: ws,
-      username: null,
       gameID: null,
     }));
   }
@@ -152,43 +158,33 @@ class Manager {
   }
 
   connectToGame(player, gameID) {
-    if (!(gameID in this.games)) this.games[gameID] = new Game(gameID);
+    if (!(gameID in this.games)) return [false];
     return this.games[gameID].connectPlayer(player);
   }
 
   handleActions(ws, actions) {
     const player = this.getPlayer(ws);
-    const { username, gameID } = player.connData;
+    const { gameID } = player.connData;
     for (const [action, args] of actions) {
-      console.log(action, args, username, gameID)
+      console.log(action, args, gameID)
       switch (action) {
+        case 'newGame':
+          const newGameID = crypto.randomUUID();
+          this.games[newGameID] = new Game(newGameID);
+          player.send({ update: [['newGame', [newGameID]]] });
+          break;
         case 'connect':
-          if (username) {
-            if (args[0] === gameID) break;
-            const [success, isGold] = this.connectToGame(player, args[0]);
-            if (success) this.sendTo(ws, { update: [['connected', [args[0], isGold]]] });
-            else player.send({ error: [['connectRefused', [args[0]]]] });
-          }
-          else {
-            player.send({ error: [['loginRequired', [action, args]]] });
-          }
+          if (args[0] === gameID) break;
+          const [success, isGold] = this.connectToGame(player, args[0]);
+          if (success) this.sendTo(ws, { update: [['connected', [args[0], isGold]]] });
+          else player.send({ error: [['connectRefused', [args[0]]]] });
           break;
         case 'disconnect':
           if (gameID !== null && gameID in this.games) {
             this.games[gameID].forfeit(player);
-            this.setPlayerData(ws, { gameID: null });
+            this.games[gameID].close();
             delete this.games[gameID];
             player.send({ update: [['disconnected', []]] });
-          }
-          break;
-        case 'login':
-          if (gameID === null) {
-            if (args[0] === username) break;
-            this.setPlayerData(ws, { username: args[0] });
-            player.send({ update: [['login', [args[0]]]] });
-          }
-          else {
-            player.send({ error: [['disconnectRequired', [action, args]]] });
           }
           break;
         case 'pushBoardState':

@@ -37,6 +37,7 @@ body {
   border-radius: 5px;
   background-color: dodgerblue;
   color: whitesmoke;
+  min-width: 48px;
 }
 .btn:hover {
   background-color: rgb(52, 154, 255);
@@ -66,6 +67,13 @@ body {
   border: 1px solid black;
   border-radius: 10px;
   background-color: antiquewhite;
+}
+
+blockquote {
+  background-color: whitesmoke;
+  padding: 15px;
+  border: 2px solid #aaa;
+  border-radius: 15px;
 }
 
 .hidden {
