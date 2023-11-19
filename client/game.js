@@ -536,8 +536,7 @@ async function onSocketMsg(data) {
           await textDialog([
             ['p', 'An error occurred whilst connecting to this game - it may already be full, or no longer exists. Try creating a new one.']
           ])
-          const URL = `https://${location.host}${location.pathname}`
-          location.href = URL
+          location.href = `https://${location.host}${location.pathname}`;
           break
       }
     }
@@ -575,6 +574,7 @@ function textDialog(lines) {
     const dialogShadow = document.getElementById('dialogShadow');
     const dialog = document.getElementById('dialog');
 
+    dialog.innerHTML = '';
     dialog.appendChild(createElement('div', { children: [
       ...lines.map(([type, text]) => createElement(
         type,
@@ -604,6 +604,7 @@ async function joinNewGame(gameID) {
     const dialogShadow = document.getElementById('dialogShadow');
     const dialog = document.getElementById('dialog');
 
+    dialog.innerHTML = '';
     dialog.appendChild(createElement('div', { children: [
       createElement('p', { attributes: {
         innerText: 'Send the link below to your opponent to let them join your game:',
@@ -631,16 +632,15 @@ async function joinNewGame(gameID) {
 
 function newOnlineGame() {
   sendActions([['newGame', []]])
-  document.getElementById('reset').disabled = true
   document.getElementById('connect').disabled = true
   document.getElementById('disconnect').disabled = false
 }
 
 function disconnectFromGame() {
   sendActions([['disconnect', []]])
-  document.getElementById('reset').disabled = false
   document.getElementById('connect').disabled = false
   document.getElementById('disconnect').disabled = true
+  location.hash = '';
 }
 
 function toRoman(i) {
