@@ -72,7 +72,7 @@ class Tile {
           }
 
           let didStrike = false
-          if (this.pawnStack.length > 0 && ((
+          if (this.pawnStack.length > 0 && !selectedTopChip?.isEnergy && ((
             topChip?.isGold === !selectedTopChip?.isGold && !topChip?.isEnergy
            ) || (topChip instanceof Shield && !selectedTopChip instanceof Tower))) {
             if (!this.clear(true)) return selectedTile.deselect(true)
