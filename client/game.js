@@ -643,22 +643,6 @@ function disconnectFromGame() {
   location.hash = '';
 }
 
-function toRoman(i) {
-  // really cheap and hacky...
-  return [
-    'I',
-    'II',
-    'III',
-    'IV',
-    'V',
-    'VI',
-    'VI',
-    'VIII',
-    'IX',
-    'X',
-  ][i-1]
-}
-
 function toAlphabet(i) {
   // really cheap and hacky...
   return 'ABCDEFGHIJ'[i]
