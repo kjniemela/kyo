@@ -84,6 +84,7 @@ blockquote {
   display: flex;
   padding: 10px;
   gap: 2%;
+  max-height: calc(var(--tile-size) * 12 + 30px);
 }
 
 #board {
@@ -95,8 +96,10 @@ blockquote {
 
 #sidebar {
   border: 1px solid black;
+  border-radius: 20px;
   background-color: whitesmoke;
   flex-grow: 1;
+  overflow-y: auto;
 }
 
 #turnlog {
