@@ -33,37 +33,44 @@ class Tile {
     const topChip = this.pawnStack[this.pawnStack.length-1]
     const selectedTopChip = selectedTile?.pawnStack[selectedTile?.pawnStack.length-1]
 
+    // If we're in a multiplayer game and it is not our turn, we should not be able to move any pawns.
     if (isRemoteGame && isPlayingGold !== isGoldsTurn) {
       return
     }
 
+    // If there are no pawns, or if the pawns on this tile don't belong to the active player, return.
     if ((
       (this.pawnStack.length > 0 && topChip.isGold !== isGoldsTurn) || this.pawnStack.length === 0
     ) && !selectedTile) {
       return
     }
 
+    // If we have a stack selected:
     if (selectedTile && !(selectedTile === this)) {
       const isReturning = this === path[path.length-1] && config.allowUndo
       if (
-        this.pawnStack.length > 0 &&
-        !isReturning &&
-        !topChip.isEnergy &&
-        !selectedTopChip?.isEnergy &&
-        topChip.isGold === selectedTopChip?.isGold &&
-        !(hasMoved || hasShuffled) &&
-        !e.ctrlKey
+        this.pawnStack.length > 0 && // if the clicked tile is occupied and
+        !isReturning && // if this is not an "undo" move and
+        !topChip.isEnergy && // if the top of the clicked stack is anything other than an energy chip and
+        !selectedTopChip?.isEnergy && // if the top of the selected stack is anything other than an energy chip and
+        topChip.isGold === selectedTopChip?.isGold && // the selected and clicked stacks belong to the same player and
+        !(hasMoved || hasShuffled) && // if the player has neither made a move nor shuffled their stack and
+        !e.ctrlKey // if the player is not attempting to make a "shoot out" move
       ) {
+        // then, we have clicked a tile that contains one of our own pawns that we cannot move onto.
+        // We should simply deselect the selected tile and instead select the clicked tile.
         selectedTile.deselect()
       }
       else {
+        // Otherwise, check if the move would be valid.
         if (selectedTile.canMoveTo(this.x, this.y)) {
-          if ((hasMoved || hasShuffled) && !isReturning) return
+          if ((hasMoved || hasShuffled) && !isReturning) return // If we have already moved or shuffled, and this is not an undo, return.
           if (isReturning) {
             path.pop()
             hasMoved = false
           }
           else {
+            // If this move does not satisfy the rules for a "free" move, make sure we won't get to move again.
             const isFreeMove = selectedTile.isFreeMove(this.x, this.y)
             if (!isFreeMove) {
               if (path.length > 0) return
@@ -71,32 +78,50 @@ class Tile {
             }
           }
 
+          // STRIKE LOGIC
           let didStrike = false
-          if (this.pawnStack.length > 0 && !selectedTopChip?.isEnergy && ((
-            topChip?.isGold === !selectedTopChip?.isGold && !topChip?.isEnergy
-           ) || (topChip instanceof Shield && !selectedTopChip instanceof Tower))) {
+          if (
+            this.pawnStack.length > 0 && // striking requries, by definition, that the clicked tile has pawns on it
+            !selectedTopChip?.isEnergy && // you cannot strike using an energy stack
+            ( // you can only strike enemy pawns and shields
+              topChip instanceof Shield ||
+              topChip?.isGold === !selectedTopChip?.isGold
+            ) &&
+            !topChip?.isEnergy && // you cannot strike enemy energy stacks, this is handled later
+            ( // towers do not strike shields, they simply move on top of them
+              !(topChip instanceof Shield) ||
+              !(selectedTopChip instanceof Tower)
+            )
+          ) {
+            // If we struck a shield or the attack failed, end turn.
             if (!this.clear(true)) return selectedTile.deselect(true)
             didStrike = true
           }
 
           let suspendedSelectedTopPawn = null
           let suspendedTopPawn = null
+          // This handles "suspended" pawns. Basically, it deals with any moves that would either:
           if (!didStrike) {
+            // 1. Move the chips under a pawn but not the pawn itself.
             if (!selectedTopChip.isEnergy && (!topChip || topChip.isEnergy) && e.ctrlKey) {
               suspendedSelectedTopPawn = selectedTile.popPawn()
               suspendedSelectedTopPawn.unlift()
             }
+            // 2. Move stack of chips onto a tile that already has a pawn.
             else if (topChip && selectedTopChip.isEnergy && !topChip.isEnergy) {
               suspendedTopPawn = this.popPawn()
               suspendedTopPawn.lift()
             }
             else if (topChip && !selectedTopChip.isEnergy && !topChip.isEnergy) {
+              // 3. Both.
               if (e.ctrlKey) {
                 suspendedSelectedTopPawn = selectedTile.popPawn()
                 suspendedSelectedTopPawn.unlift()
                 suspendedTopPawn = this.popPawn()
                 suspendedTopPawn.lift()
               }
+              // In any other case, if there are pawns on both tiles, we must have somehow made an illegal move.
+              // The only exception is if we're a tower moving onto a shield.
               else if (!(topChip instanceof Shield && selectedTopChip instanceof Tower)) {
                 hasMoved = false
                 return
@@ -104,6 +129,7 @@ class Tile {
             }
           }
 
+          // Actually any pawns/chips to be moved.
           const movedPawns = []
           const selectedPawns = selectedTile.liftCount
           for (let i = 0; i < selectedPawns; i++) {
@@ -113,6 +139,7 @@ class Tile {
             this.pushPawn(movedPawns[i])
           }
 
+          // Handled the "suspended" pawn.
           if (suspendedTopPawn) {
             this.pushPawn(suspendedTopPawn)
           }
@@ -120,11 +147,14 @@ class Tile {
             selectedTile.pushPawn(suspendedSelectedTopPawn)
           }
 
+          // Add the selected tile to the path.
           if (!isReturning) path.push(selectedTile)
           selectedTile = this
           if (didStrike || e.ctrlKey) this.deselect()
           return
         }
+        // If we made a move that would clearly not be valid, return if we have already moved,
+        // otherwise just deselect the tile and let us try to move again.
         else {
           if (hasMoved || path.length > 0) {
             return
@@ -135,22 +165,28 @@ class Tile {
         }
       }
     }
+    // If we have gotten to this point, we either failed to make a move or never even tried to in the first place.
+    // In either case, the clicked tile becomes the selected tile after this point.
     selectedTile = this
 
+    // If the shift key is pressed, lift up the chips underneath our pawn one by one.
     if (e.shiftKey) {
       if (this.liftCount < this.pawnStack.length) {
         const pawn = this.pawnStack[this.pawnStack.length-this.liftCount-1]
-        if (pawn.isGold !== isGoldsTurn && !(pawn instanceof Shield)) return
-        if (this.liftCount > topChip.stackLimit) return
+        if (pawn.isGold !== isGoldsTurn && !(pawn instanceof Shield)) return // We can only lift our own chips.
+        if (this.liftCount > topChip.stackLimit) return // We cannot lift more chips than the pawn's stack limit, if it has one.
         this.liftCount++
         this.pawnStack[this.pawnStack.length-this.liftCount].lift()
       }
       else {
+        // If we have already lifed all chips, drop them all back down and start over.
         this.deselect()
       }
     }
     else {
-      if (this.liftCount > 0 + Number(e.altKey)) {
+      // If we have any pawns lifted, handle that
+      if (this.liftCount > 0 + Number(e.altKey)) { // (If the alt key is pressed, we don't count the top pawn)
+        // If the alt key is pressed and we are allowed to shuffle our stack, do that.
         if (e.altKey && ((!hasMoved && path.length === 0) || topChip instanceof Queen)) {
           let suspendedTopPawn
           if (!topChip.isEnergy) suspendedTopPawn = this.popPawn()
@@ -159,6 +195,7 @@ class Tile {
           if (suspendedTopPawn) this.pushPawn(suspendedTopPawn)
           if (!(topChip instanceof Queen)) hasShuffled = true
         }
+        // Otherwise, put one chip down.
         else {
           this.pawnStack[this.pawnStack.length-this.liftCount].unlift()
           this.liftCount--
@@ -168,6 +205,7 @@ class Tile {
         }
         
       }
+      // Otherwise, if we have no pawns lifted, lift them all back up.
       else {
         this.liftCount = 0
         for (let i = this.pawnStack.length - 1; i >= 0; i--) {
@@ -179,7 +217,6 @@ class Tile {
         }
       }
     }
-    // console.log(this.liftCount)
   }
 
   canMoveTo(x, y) {
