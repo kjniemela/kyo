@@ -47,7 +47,7 @@ class Tile {
 
     // If we have a stack selected:
     if (selectedTile && !(selectedTile === this)) {
-      const isReturning = this === path[path.length-1] && config.allowUndo
+      const isReturning = this === path[path.length-1]?.[0] && config.allowUndo
       if (
         this.pawnStack.length > 0 && // if the clicked tile is occupied and
         !isReturning && // if this is not an "undo" move and
@@ -132,6 +132,7 @@ class Tile {
           // Actually any pawns/chips to be moved.
           const movedPawns = []
           const selectedPawns = selectedTile.liftCount
+          const isFreeMove = selectedTile.isFreeMove(this.x, this.y)
           for (let i = 0; i < selectedPawns; i++) {
             movedPawns.push(selectedTile.popPawn())
           }
@@ -143,12 +144,21 @@ class Tile {
           if (suspendedTopPawn) {
             this.pushPawn(suspendedTopPawn)
           }
+          const availableEnergy = selectedTile.availableEnergy(isGoldsTurn, selectedTopChip)
+          let isShootOutMove = false
           if (suspendedSelectedTopPawn) {
+            isShootOutMove = true
             selectedTile.pushPawn(suspendedSelectedTopPawn)
           }
 
           // Add the selected tile to the path.
-          if (!isReturning) path.push(selectedTile)
+          if (!isReturning) path.push([
+            selectedTile,
+            selectedPawns-1,
+            availableEnergy,
+            isFreeMove,
+            isShootOutMove,
+          ])
           selectedTile = this
           if (didStrike || e.ctrlKey) this.deselect()
           return
@@ -187,13 +197,34 @@ class Tile {
       // If we have any pawns lifted, handle that
       if (this.liftCount > 0 + Number(e.altKey)) { // (If the alt key is pressed, we don't count the top pawn)
         // If the alt key is pressed and we are allowed to shuffle our stack, do that.
-        if (e.altKey && ((!hasMoved && path.length === 0) || topChip instanceof Queen)) {
+        if (e.altKey && ((!hasMoved && (path.length === 0 || path[path.length - 1][1] === 'shuffle')) || topChip instanceof Queen)) {
           let suspendedTopPawn
           if (!topChip.isEnergy) suspendedTopPawn = this.popPawn()
+          const oldOrder = path[path.length - 1]?.[1] === 'shuffle'
+            ? path[path.length - 1][3]
+            : this.pawnStack.map(pawn => pawn.isDark)
           const pawn = this.splicePawn(this.pawnStack.length-this.liftCount)
           this.pushPawn(pawn)
-          if (suspendedTopPawn) this.pushPawn(suspendedTopPawn)
+          const newOrder = this.pawnStack.map(pawn => pawn.isDark)
+          const orderDiff = []
+          let foundChanges = false
+          newOrder.forEach((val, i) => {
+            if (val !== oldOrder[i]) foundChanges = true
+            if (foundChanges) orderDiff.push(val)
+          })
+          console.log(oldOrder, newOrder, orderDiff)
           if (!(topChip instanceof Queen)) hasShuffled = true
+          if (path[path.length - 1]?.[1] === 'shuffle') {
+            if (orderDiff.length === 0) {
+              path.pop()
+              hasShuffled = false
+            }
+            else path[path.length - 1][2] = orderDiff
+          }
+          else {
+            path.push([undefined, 'shuffle', orderDiff, oldOrder])
+          }
+          if (suspendedTopPawn) this.pushPawn(suspendedTopPawn)
         }
         // Otherwise, put one chip down.
         else {
@@ -227,7 +258,7 @@ class Tile {
   }
 
   isFreeMove(x, y) {
-    const lastTile = path[path.length-1]
+    const lastTile = path[path.length-1]?.[0]
     let lastTopChip;
     if (lastTile) {
       lastTopChip = lastTile.pawnStack[lastTile.pawnStack.length-1]
@@ -258,11 +289,34 @@ class Tile {
     }
     return false
   }
+
+  availableEnergy(isGold, movingPawn) {
+    let count = 0
+    for (let i = this.pawnStack.length - 1; i >= 0; i--) {
+      const pawn = this.pawnStack[i]
+      if (
+        (pawn instanceof Shield && movingPawn instanceof Tower) ||
+        (pawn.isGold === isGold && pawn.isEnergy)
+      ) {
+        count++
+      }
+      else {
+        break
+      }
+    }
+    return count
+  }
   
   deselect(forcePassTurn=false) {
+    const liftCount = this.liftCount
     this.liftCount = 0
     this.pawnStack.forEach(pawn => pawn.unlift())
     if (path.length > 0 || forcePassTurn || hasMoved || hasShuffled) {
+      // // Since the turn is now definitely over, let's handle destroying enemy roads.
+      // console.log(liftCount)
+      // for (let i = liftCount - 1; i >= 0; i--) {
+      //   console.log(this.pawnStack[i])
+      // }
       passTurn()
     }
     selectedTile = null
@@ -463,7 +517,7 @@ function gameOver(goldWon) {
 
 function passTurn() {
   if (selectedTile) {
-    const minPath = path.map(tile => [tile.x, tile.y])
+    const minPath = path.map(([tile, ...data]) => tile ? [tile.x, tile.y, ...data] : [...data])
     minPath.push([selectedTile.x, selectedTile.y])
     turnLog.push(minPath)
   }
@@ -726,7 +780,32 @@ function renderTurnLog() {
   for (const path of turnLog) {
     const item = document.createElement('li')
     item.classList.add('logItem')
-    item.innerText = path.map(([x, y]) => `${toAlphabet(x)}${y}`).join(' → ')
+    let shuffle = null
+    item.innerText = path.map(([x, y, carry, leave, free, shoot]) => {
+      if (x === 'shuffle') {
+        shuffle = `↺${y.map(val => val ? '▮': '▯').join('')}`
+        return
+      }
+      let coord = `${toAlphabet(x)}${y}`
+      if (shuffle) {
+        coord = `${coord} ${shuffle}`
+        shuffle = null
+      }
+      if (carry === undefined) return coord
+      if (free) {
+        if (leave === 1) {
+          return `${coord} →`
+        }
+        else {
+          return `${coord} ⎯${leave}→`
+        }
+      }
+      else {
+        const symbol = shoot ? '⇏' : '⇒'
+        if (leave) return `${coord} =${leave}${symbol}`
+        else return `${coord} ${symbol}`
+      }
+    }).join(' ')
     list.appendChild(item)
   }
 }
