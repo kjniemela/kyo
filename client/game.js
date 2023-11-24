@@ -499,17 +499,41 @@ const pawnTypeMap = {
   'king': King,
 }
 
+function comparePawnState(pawn, state) {
+  return (
+    (
+      (!pawn && !state) || (pawn && state)
+    ) &&
+    pawn.isGold === state.isGold &&
+    pawn.isEnergy === state.isEnergy &&
+    pawn.isDark === state.isDark &&
+    (
+      pawn.type === state.type ||
+      (pawn instanceof Shield && state.type === 'shield')
+    )
+  )
+}
+
+function compareStacks(pawnStack, state) {
+  let areAllEqual = true
+  for (let i = 0; i < Math.max(pawnStack.length, state.length); i++) {
+    areAllEqual &&= comparePawnState(pawnStack[i], state[i])
+  }
+  return areAllEqual
+}
+
 function applyBoardState(state, log) {
   console.log('APPLY STATE', state)
   turnLog = log
   for (let i = 0; i < 10; i++) {
     for (let j = 0; j < 10; j++) {
-      const updates = state[i][j]
+      const newState = state[i][j]
       const tile = tiles[i][j]
+      if (compareStacks(tile.pawnStack, newState)) continue
+      console.log(tile.pawnStack)
       tile.clear()
-      // console.log(tile)
-      for (const pawn of updates) {
-        // console.log(pawn)
+      for (const pawn of newState) {
+        console.log(pawn)
         if (pawn.isEnergy) {
           tile.pushPawn(new Energy(pawn.isDark, pawn.isGold))
         }
@@ -847,7 +871,6 @@ function resetBoard() {
 socket.onopen = (event) => {
   if (urlGameId) {
     sendActions([['connect', [urlGameId]]])
-    document.getElementById('reset').disabled = true
     document.getElementById('connect').disabled = true
     document.getElementById('disconnect').disabled = false
   }
