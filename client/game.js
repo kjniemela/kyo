@@ -308,15 +308,19 @@ class Tile {
   }
   
   deselect(forcePassTurn=false) {
-    const liftCount = this.liftCount
     this.liftCount = 0
     this.pawnStack.forEach(pawn => pawn.unlift())
     if (path.length > 0 || forcePassTurn || hasMoved || hasShuffled) {
-      // // Since the turn is now definitely over, let's handle destroying enemy roads.
-      // console.log(liftCount)
-      // for (let i = liftCount - 1; i >= 0; i--) {
-      //   console.log(this.pawnStack[i])
-      // }
+      // Since the turn is now definitely over, let's handle destroying enemy roads.
+      if (path.length > 0 && !this.pawnStack[this.pawnStack.length - 1].isEnergy) {
+        const topPawn = this.pawnStack[this.pawnStack.length - 1]
+        const [, carry] = path[path.length - 1]
+        for (let i = this.pawnStack.length - carry - 2; i >= 0; i--) {
+          const chip = this.pawnStack[i]
+          if (chip.isGold === topPawn.isGold) break
+          this.splicePawn(i)
+        }
+      }
       passTurn()
     }
     selectedTile = null
