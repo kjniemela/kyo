@@ -329,7 +329,14 @@ class Tile {
 
   clear(isStrike=false) {
     const pawnCount = this.pawnStack.length;
+    const topPawn = this.pawnStack[this.pawnStack.length - 1]
     for (let i = 0; i < pawnCount; i++) {
+      if (isStrike && (
+        this.pawnStack[this.pawnStack.length - 1].isGold !== topPawn.isGold ||
+        this.pawnStack[this.pawnStack.length - 1] instanceof Shield
+      )) {
+        break
+      }
       const poppedPawn = this.popPawn()
       if (isStrike && poppedPawn instanceof Shield && i === 0) {
         return this.pawnStack.length === 0
