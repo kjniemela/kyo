@@ -624,7 +624,11 @@ async function onSocketMsg(data) {
         case 'connected':
           isRemoteGame = true
           isPlayingGold = args[1]
+          document.getElementById('turn').innerText = `Waiting for ${isGoldsTurn ? 'red' : 'gold'} player to connect...`
           document.getElementById('user').innerText = `Connected as ${isPlayingGold ? 'gold' : 'red'} player`
+          resetBoard(true)
+          break
+        case 'beginGame':
           resetBoard()
           break
         case 'disconnected':
@@ -821,7 +825,7 @@ function renderTurnLog() {
   }
 }
 
-function resetBoard() {
+function resetBoard(clearBoard=false) {
   const board = document.getElementById('board')
   board.innerHTML = ''
 
@@ -851,6 +855,8 @@ function resetBoard() {
     row[appendFn](createLabel(i, 'left'))
     board[appendFn](row)
   }
+
+  if (clearBoard) return
 
   /* Add Gold's Energy */
   // Dark

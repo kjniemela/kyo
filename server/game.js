@@ -26,6 +26,13 @@ class Game {
     }
   }
 
+  beginGame() {
+    if (this.goldPlayer && this.redPlayer) {
+      this.sendTo(true, { update: [['beginGame', []]] });
+      this.sendTo(false, { update: [['beginGame', []]] });
+    }
+  }
+
   sendTo(toGold, data) {
     if (toGold && this.goldPlayer) this.goldPlayer.send(data);
     else if (this.redPlayer) this.redPlayer.send(data);
@@ -176,7 +183,10 @@ class Manager {
         case 'connect':
           if (args[0] === gameID) break;
           const [success, isGold] = this.connectToGame(player, args[0]);
-          if (success) this.sendTo(ws, { update: [['connected', [args[0], isGold]]] });
+          if (success) {
+            this.sendTo(ws, { update: [['connected', [args[0], isGold]]] });
+            this.games[args[0]].beginGame();
+          }
           else player.send({ error: [['connectRefused', [args[0]]]] });
           break;
         case 'disconnect':
