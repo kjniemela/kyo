@@ -26,7 +26,7 @@ class Game {
     }
   }
 
-  beginGame() {
+  tryBeginGame() {
     if (this.goldPlayer && this.redPlayer) {
       this.sendTo(true, { update: [['beginGame', []]] });
       this.sendTo(false, { update: [['beginGame', []]] });
@@ -185,7 +185,7 @@ class Manager {
           const [success, isGold] = this.connectToGame(player, args[0]);
           if (success) {
             this.sendTo(ws, { update: [['connected', [args[0], isGold]]] });
-            this.games[args[0]].beginGame();
+            this.games[args[0]].tryBeginGame();
           }
           else player.send({ error: [['connectRefused', [args[0]]]] });
           break;
