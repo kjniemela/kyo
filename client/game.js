@@ -773,6 +773,45 @@ function disconnectFromGame() {
   location.hash = '';
 }
 
+function createSelect(name, label, options) {
+  return createElement('div', { classes: ['selectBox'], children: [
+    createElement('label', { attributes: { for: name, innerText: label } }),
+    createElement('select', { attributes: { name }, children: [
+      ...options.map(([value, text]) => 
+        createElement('option', { attributes: { value, innerText: text } }),
+      ),
+    ] }),
+  ] });
+}
+
+function openSettings() {
+  const dialogShadow = document.getElementById('dialogShadow');
+  const dialog = document.getElementById('dialog');
+
+  dialog.innerHTML = '';
+  dialog.appendChild(createElement('div', { children: [
+    createSelect('ruleset', 'Ruleset:', [
+      ['classic', 'Classic Kyo'],
+      ['new', 'New Kyo'],
+    ]),
+    createSelect('ruleset', 'Starting Positions:', [
+      ['rear', 'Open Field'],
+      ['middle', 'Trench'],
+      ['front', 'Deadlock'],
+    ]),
+    createElement('div', { children: [
+      createElement('button', { classes: ['btn'], attributes: {
+        innerText: 'Ok',
+        onclick: () => {
+          dialogShadow.classList.add('hidden');
+        },
+      } }),
+    ] }),
+  ] }));
+  
+  dialogShadow.classList.remove('hidden');
+}
+
 function toAlphabet(i) {
   // really cheap and hacky...
   return 'ABCDEFGHIJ'[i]

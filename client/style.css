@@ -49,6 +49,14 @@ body {
   background-color: rgb(130, 130, 130);
 }
 
+.selectBox label {
+  margin-right: 8px;
+}
+.selectBox select {
+  padding: 3px;
+  border-radius: 8px;
+}
+
 #dialogShadow {
   position: absolute;
   z-index: 3;
