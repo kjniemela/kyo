@@ -10,6 +10,8 @@ let turnLog = []
 
 const config = {
   allowUndo: false,
+  startPos: 'middle',
+  ruleset: 'new',
 }
 
 const urlGameId = location.hash.substring(1)
@@ -764,21 +766,23 @@ function newOnlineGame() {
   sendActions([['newGame', []]])
   document.getElementById('connect').disabled = true
   document.getElementById('disconnect').disabled = false
+  document.getElementById('settings').disabled = true
 }
 
 function disconnectFromGame() {
   sendActions([['disconnect', []]])
   document.getElementById('connect').disabled = false
   document.getElementById('disconnect').disabled = true
+  document.getElementById('settings').disabled = false
   location.hash = '';
 }
 
-function createSelect(name, label, options) {
+function createSelect(name, label, options, selected, onchange) {
   return createElement('div', { classes: ['selectBox'], children: [
     createElement('label', { attributes: { for: name, innerText: label } }),
-    createElement('select', { attributes: { name }, children: [
+    createElement('select', { attributes: { name, onchange: (e) => onchange(e.target.value) }, children: [
       ...options.map(([value, text]) => 
-        createElement('option', { attributes: { value, innerText: text } }),
+        createElement('option', { attributes: { value, innerText: text, selected: (value === selected) } }),
       ),
     ] }),
   ] });
@@ -788,22 +792,39 @@ function openSettings() {
   const dialogShadow = document.getElementById('dialogShadow');
   const dialog = document.getElementById('dialog');
 
+  const startPosDescs = {
+    rear: 'The Pawns start lined up on rows 1 and 8, directly in front of the Heavies.',
+    middle: 'The Pawns start lined up on rows 3 and 6, leaving a no man\'s land in between.',
+    front: 'The Pawns start lined up on rows 4 and 5, directly facing each other.',
+  };
+
   dialog.innerHTML = '';
-  dialog.appendChild(createElement('div', { children: [
+  dialog.appendChild(createElement('div', { classes: [
+    'flex',
+    'flex-column',
+    'gap-1',
+  ], children: [
     createSelect('ruleset', 'Ruleset:', [
       ['classic', 'Classic Kyo'],
       ['new', 'New Kyo'],
-    ]),
-    createSelect('ruleset', 'Starting Positions:', [
+    ], config.ruleset, (value) => {
+      config.ruleset = value;
+    }),
+    createSelect('startPos', 'Starting Positions:', [
       ['rear', 'Open Field'],
       ['middle', 'Trench'],
       ['front', 'Deadlock'],
-    ]),
+    ], config.startPos, (value) => {
+      config.startPos = value;
+      document.getElementById('startPosDesc').innerText = startPosDescs[config.startPos];
+    }),
+    createElement('blockquote', { classes: ['mt-0', 'mx-1', 'ml-4'], attributes: { id: 'startPosDesc', innerText: startPosDescs[config.startPos] } }),
     createElement('div', { children: [
       createElement('button', { classes: ['btn'], attributes: {
-        innerText: 'Ok',
+        innerText: 'Apply',
         onclick: () => {
           dialogShadow.classList.add('hidden');
+          resetBoard();
         },
       } }),
     ] }),
@@ -978,11 +999,16 @@ function resetBoard(clearBoard=false) {
 
   /* Add Pawns */
   // Light & Heavy Pawns
+  const [goldLightPawnRow, redLightPawnRow] = {
+    'rear': [1, 8],
+    'middle': [3, 6],
+    'front': [4, 5],
+  }[config.startPos];
   for (let i = 0; i < 4; i++) {
-    tiles[1][i].pushPawn(new LightPawn(true))
-    tiles[8][i].pushPawn(new LightPawn(false))
-    tiles[1][9-i].pushPawn(new LightPawn(true))
-    tiles[8][9-i].pushPawn(new LightPawn(false))
+    tiles[goldLightPawnRow][i].pushPawn(new LightPawn(true))
+    tiles[redLightPawnRow][i].pushPawn(new LightPawn(false))
+    tiles[goldLightPawnRow][9-i].pushPawn(new LightPawn(true))
+    tiles[redLightPawnRow][9-i].pushPawn(new LightPawn(false))
     tiles[0][i].pushPawn(new HeavyPawn(true))
     tiles[9][i].pushPawn(new HeavyPawn(false))
     tiles[0][9-i].pushPawn(new HeavyPawn(true))
@@ -1003,11 +1029,12 @@ function resetBoard(clearBoard=false) {
   passTurn()
 }
 
-socket.onopen = (event) => {
+socket.onopen = () => {
   if (urlGameId) {
     sendActions([['connect', [urlGameId]]])
     document.getElementById('connect').disabled = true
     document.getElementById('disconnect').disabled = false
+    document.getElementById('settings').disabled = true
   }
 }
 
