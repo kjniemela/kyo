@@ -631,6 +631,9 @@ async function onSocketMsg(data) {
           resetBoard(true)
           break
         case 'beginGame':
+          for (const key in args[0]) {
+            config[key] = args[0][key];
+          }
           resetBoard()
           break
         case 'disconnected':
@@ -763,7 +766,7 @@ async function joinNewGame(gameID) {
 }
 
 function newOnlineGame() {
-  sendActions([['newGame', []]])
+  sendActions([['newGame', [config]]])
   document.getElementById('connect').disabled = true
   document.getElementById('disconnect').disabled = false
   document.getElementById('settings').disabled = true

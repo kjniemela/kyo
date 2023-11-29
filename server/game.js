@@ -1,13 +1,14 @@
 const crypto = require('crypto');
 
 class Game {
-  constructor(id) {
+  constructor(id, config) {
     this.id = id;
     this.goldPlayer = null;
     this.redPlayer = null;
     this.boardState = [];
     this.turnLog = [];
     this.isGoldsTurn = true;
+    this.config = config;
   }
 
   connectPlayer(player) {
@@ -28,8 +29,8 @@ class Game {
 
   tryBeginGame() {
     if (this.goldPlayer && this.redPlayer) {
-      this.sendTo(true, { update: [['beginGame', []]] });
-      this.sendTo(false, { update: [['beginGame', []]] });
+      this.sendTo(true, { update: [['beginGame', [this.config]]] });
+      this.sendTo(false, { update: [['beginGame', [this.config]]] });
     }
   }
 
@@ -173,11 +174,12 @@ class Manager {
     const player = this.getPlayer(ws);
     const { gameID } = player.connData;
     for (const [action, args] of actions) {
-      console.log(action, args, gameID)
+      // console.log(action, args, gameID)
+      console.log(action, this.connections.indexOf(ws))
       switch (action) {
         case 'newGame':
           const newGameID = crypto.randomUUID();
-          this.games[newGameID] = new Game(newGameID);
+          this.games[newGameID] = new Game(newGameID, args[0]);
           player.send({ update: [['newGame', [newGameID]]] });
           break;
         case 'connect':
