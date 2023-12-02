@@ -95,6 +95,15 @@ class Tile {
               !(selectedTopChip instanceof Tower)
             )
           ) {
+            // Light Pawns can only attack if they "outnumber" their opponent
+            if (selectedTopChip.type === 'lightpawn') {
+              const attackers = this.countAdjacent((stack) => stack.length && stack[stack.length-1].isGold === selectedTopChip.isGold)
+              const defenders = selectedTile.countAdjacent((stack) => stack.length && stack[stack.length-1].isGold === topChip.isGold)
+              if (attackers <= defenders) {
+                hasMoved = false
+                return
+              };
+            }
             // If we struck a shield or the attack failed, end turn.
             if (!this.clear(true)) return selectedTile.deselect(true)
             didStrike = true
@@ -257,6 +266,25 @@ class Tile {
       return true
     }
     return false
+  }
+
+  countAdjacent(filter) {
+    let count = 0;
+    for (let i = -1; i <= 1; i++) {
+      for (let j = -1; j <= 1; j++) {
+        if ((i || j)) {
+          const [x, y] = [this.x+i, this.y+j];
+          if (
+            x > 0 && x < 10 &&
+            y > 0 && y < 10
+          ) {
+            const tile = tiles[y][x];
+            if (filter(tile.pawnStack)) count++;
+          }
+        }
+      }
+    }
+    return count;
   }
 
   isFreeMove(x, y) {
