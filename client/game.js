@@ -707,9 +707,16 @@ async function onSocketMsg(data) {
 }
 
 function sendActions(actions) {
-  socket.send(JSON.stringify({
-    action: actions,
-  }))
+  if (socket.readyState === socket.CLOSED || socket.readyState === socket.CLOSING) {
+    textDialog([
+      ['p', 'Failed to connect to the multiplayer server - reloading the page may fix this problem, but if it persists, please contact a site admin at contact@hmistudios.com.']
+    ], 'Reload').then(() => location.reload())
+  }
+  else {
+    socket.send(JSON.stringify({
+      action: actions,
+    }))
+  }
 }
 
 function createElement(type, { classes, attributes, children }) {
@@ -732,7 +739,7 @@ function createElement(type, { classes, attributes, children }) {
   return el;
 }
 
-function textDialog(lines) {
+function textDialog(lines, okBtnText) {
   return new Promise((resolve, reject) => {
     const dialogShadow = document.getElementById('dialogShadow');
     const dialog = document.getElementById('dialog');
@@ -747,7 +754,7 @@ function textDialog(lines) {
       )),
       createElement('div', { children: [
         createElement('button', { classes: ['btn'], attributes: {
-          innerText: 'Ok',
+          innerText: okBtnText ?? 'Ok',
           onclick: () => {
             dialogShadow.classList.add('hidden');
             resolve();
