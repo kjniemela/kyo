@@ -812,6 +812,7 @@ function disconnectFromGame() {
   document.getElementById('connect').disabled = false
   document.getElementById('disconnect').disabled = true
   document.getElementById('settings').disabled = false
+  document.getElementById('user').innerText = `Disconnected`
   location.hash = '';
 }
 
