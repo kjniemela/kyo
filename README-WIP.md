@@ -23,19 +23,42 @@ There are two types of pieces in Kyo, which each have several subtypes:
 
 Chips can be stacked together on the same board tile, and one pawn may be placed on top of a stack of chips. Collectively, all chips and/or pawns on a tile are referred to as a "Stack".
 
+When making a move, the player may pick up the pawn, if present, as well as any friendly chips from the top of the stack and make a move with these. This selection of picked-up chips and/or a pawn is called a stack slice. If no pawn is present, the player may pick up any number of the chips on the tile. If a Light Pawn is present, the player may **not** pick up any chips, and if any other type of pawn is present, the player may pick up a maximum of **five** chips.
+
+There are four basic types of moves:
+- ### "Direct" Moves
+  - The piece(s) move **one** step in any direction, including diagonally.
+  - Making a direct move always ends your turn (except for Towers, which may always choose to make deploy moves at the end of their turn).
+  - The whole stack slice can make a direct move together. A direct move can also be made with just the pawn on top of a stack slice, or with just the chips under the pawn, leaving the pawn behind.
+- ### "Mana" Moves
+  - If the player leaves behind a Mana chip of the correct color after making a move (Dark Mana for orthogonal moves, Light Mana for diagonal moves), this qualifies as a Mana move. (See more in the Mana section of this ruleset.)
+  - After any Mana move, the player may choose to make another Mana move, if a legal Mana move is avaiable.
+  - The player may **not** choose to make a direct move following a Mana move.
+  - Only the Queen may make shuffle moves after a Mana move.
+  - Only the Tower may make deploy moves after a Mana move.
+- ### "Shuffle" Moves
+  - The player may choose to reshuffle the chips in the currently lifted stack slice.
+  - A shuffle move **must never** end with a Shield chip being placed underneath any Mana chip. Any such move is illegal.
+  - Making a shuffle move ends your turn, except for the Queen, which may make any number of shuffle moves at any time.
+- ### "Deploy" Moves
+  - If a pawn has an undeployed Shield chip beneath it, it may choose to deploy that shield onto any adjacent tile, including diagonally.
+  - More than one shield may be deployed at once.
+  - For any pawn except the Tower, a deploy move is equivalent to making a direct move with a stack slice containing the shield, meaning the turn ends.
+  - Towers, however, may make deploy moves at any time without ending their turn.
+
 ## Pawns
-All pawns are able to move one step in any direction, including diagonally, and they can attack in the same way.
+
 ### Light Pawn
 ![goldlightpawn](/client/assets/pieces/goldlightpawn.png)
 ![redlightpawn](/client/assets/pieces/redlightpawn.png)  
 The Light Pawn (or just the Pawn) is the basic footsoldier of Kyo. They are the only pawns that cannot use Mana in any way, and they are also the only pawns that cannot always capture:
-the Light Pawn can only attack if it "outnumbers" the enemy it wants to attack. This means that there needs to be more friendly stacks adjacent to the enemy pawn than there are enemy stacks surrounding the attacking light pawn.  
+the Light Pawn can only attack if it "outnumbers" the enemy it wants to attack (unless it is simply moving onto a stack of enemy Mana). This means that there needs to be more friendly stacks adjacent to the enemy pawn than there are enemy stacks surrounding the attacking light pawn.  
 Some examples:  
 - The attacking gold pawn and the defending red pawn are adjacent to each other, but no gold pawns are adjacent to the red pawn, and vice versa. This means they are evenly matched, and neither can attack the other.  
   ![image](https://github.com/kjniemela/kyo/assets/26636748/ce5744ce-fb4e-406c-ac3f-e03b04fa0299)
 - In this example, the red pawn has two gold pawns adjacent to it, but the gold pawn only has one red pawn adjacent to it. So in this instance, the gold pawn outnumbers the red pawn and can attack it, while the red pawn cannot attack.  
   ![image](https://github.com/kjniemela/kyo/assets/26636748/3a8206c9-404d-44f3-951e-813ac25fbe13)
-- Here,   
+- Here, gold has two pawns adjacent to the the target red pawn, but red has one pawn and one Mana chip next to the attacking gold pawn. This would prevent the gold pawn from attacking the red pawn. Note that the gold pawn would still be able to capture the red Mana chip, as the outnumbering requirement does not apply when attacking Mana.  
   ![image](https://github.com/kjniemela/kyo/assets/26636748/30fb07a8-8ec0-42c6-82d7-7401bdbd9251)
 
 
