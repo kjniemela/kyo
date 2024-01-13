@@ -195,7 +195,10 @@ class Tile {
             if (isDeployMove) {
               deployMode = true
               suspendedSelectedTopPawn.lift()
-              this.pawnStack.forEach(pawn => pawn.unlift())
+              this.pawnStack.forEach((pawn) => {
+                pawn.unlift()
+                this.liftCount--
+              })
             }
 
             selectedTile.pushPawn(suspendedSelectedTopPawn)
@@ -406,6 +409,7 @@ class Tile {
   }
 
   clear(isStrike=false) {
+    console.log('STRIKE: ', isStrike)
     const pawnCount = this.pawnStack.length;
     const topPawn = this.pawnStack[this.pawnStack.length - 1]
     for (let i = 0; i < pawnCount; i++) {
