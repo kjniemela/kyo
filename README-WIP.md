@@ -31,7 +31,7 @@ There are four basic types of moves:
   - Making a direct move always ends your turn (except for Towers, which may always choose to make deploy moves at the end of their turn).
   - The whole stack slice can make a direct move together. A direct move can also be made with just the pawn on top of a stack slice, or with just the chips under the pawn, leaving the pawn behind.
 - ### "Mana" Moves
-  - If the player leaves behind a Mana chip of the correct color after making a move (Dark Mana for orthogonal moves, Light Mana for diagonal moves), this qualifies as a Mana move. (See more in the Mana section of this ruleset.)
+  - If the player leaves behind a Mana chip of the correct color after making a move (Dark Mana for orthogonal moves, Light Mana for diagonal moves), this qualifies as a Mana move. (See more in the [Mana](#mana) section of this ruleset.)
   - After any Mana move, the player may choose to make another Mana move, if a legal Mana move is avaiable.
   - The player may **not** choose to make a direct move following a Mana move.
   - Only the Queen may make shuffle moves after a Mana move.
@@ -77,21 +77,33 @@ Some examples:
 
 
 ## Mana
-Each player has Light and Dark Mana chips.  
-![darkgold](https://github.com/kjniemela/kyo/assets/26636748/ac37cd23-b883-4c71-b7c8-2ae622a01035)
-![lightgold](https://github.com/kjniemela/kyo/assets/26636748/f77ceed3-2735-491b-be57-5469deb1c0fe)
-![darkred](https://github.com/kjniemela/kyo/assets/26636748/9550d305-acf6-41d6-b94e-49c7627a400d)
-![lightred](https://github.com/kjniemela/kyo/assets/26636748/0697c321-fd85-49c6-8bce-1cbd1188cda0)  
-Multiple Mana chips can be stacked on the same tile, and the whole stack can move one step in any direction, with or without a pawn on top.
+Each player has Dark and Light Mana chips.  
+![darkgold](/client/assets/pieces/darkgold.png)
+![lightgold](/client/assets/pieces/lightgold.png)
+![darkred](/client/assets/pieces/darkred.png)
+![lightred](/client/assets/pieces/lightred.png)  
+Pawns moving over Mana (making a "Mana" move) obey the following rules:
 
-![image](https://github.com/kjniemela/kyo/assets/26636748/e35f1137-6848-417b-b13b-9efc88b80d70)
-![image](https://github.com/kjniemela/kyo/assets/26636748/a208c2ed-0519-4cbb-90df-024382bfca19)
-![image](https://github.com/kjniemela/kyo/assets/26636748/c3a811b7-a6a8-449f-9e09-5c7c1c620d21)
-![image](https://github.com/kjniemela/kyo/assets/26636748/0c285d83-1b5d-4646-aa28-4b4d5b85ebbd)
-![image](https://github.com/kjniemela/kyo/assets/26636748/246e2ad5-5e08-419d-a204-827a3f20aa0f)
-
-**This is legal:**  
-![image](https://github.com/kjniemela/kyo/assets/26636748/edc01a45-5859-4f6a-85cf-c69744ab275d)
-
-**This is not:**  
-![image](https://github.com/kjniemela/kyo/assets/26636748/e83f9316-d02b-4de6-9642-2f42fe7f54f1)
+- The top Mana chip left behind after a pawn makes a move decides what type of Mana move to make:
+  - If a Dark Mana chip was left behind, the move must be orthogonal.
+  - If a Light Mana chip was left behind, the move must be diagonal.
+  - In the following example, the pawn starts by making a move straight up, leaving a Dark Mana chip behind. It then makes two consecutive, moves diagonally up and to the right, leaving a Light Mana chip behind each time.  
+  ![image](https://github.com/kjniemela/kyo/assets/26636748/e35f1137-6848-417b-b13b-9efc88b80d70)
+  ![image](https://github.com/kjniemela/kyo/assets/26636748/a208c2ed-0519-4cbb-90df-024382bfca19)
+  ![image](https://github.com/kjniemela/kyo/assets/26636748/c3a811b7-a6a8-449f-9e09-5c7c1c620d21)
+  ![image](https://github.com/kjniemela/kyo/assets/26636748/0c285d83-1b5d-4646-aa28-4b4d5b85ebbd)
+  ![image](https://github.com/kjniemela/kyo/assets/26636748/246e2ad5-5e08-419d-a204-827a3f20aa0f)
+- When making multiple moves across Mana chips of the same color, the pawn may not change direction. When changing colors, the pawn may pick a new direction.
+  - These moves are legal:  
+  ![image](https://github.com/kjniemela/kyo/assets/26636748/edc01a45-5859-4f6a-85cf-c69744ab275d)
+  ![image](https://github.com/kjniemela/kyo/assets/26636748/07835712-54e5-48fa-94e2-2584e1704988)
+  - These are not:  
+  ![image](https://github.com/kjniemela/kyo/assets/26636748/e83f9316-d02b-4de6-9642-2f42fe7f54f1)
+  ![image](https://github.com/kjniemela/kyo/assets/26636748/83cb4a62-195e-4d8d-8fa4-5ab707b946ca)
+- Pawns are allowed to use enemy Mana, they just can't pick them up:
+  - In this example, the red pawn makes three Mana moves, all one step up and to the left. For the first and third moves, it leaves one of its Light Mana chips behind, but for the second move it does not need to leave any of its own chips behind, as a gold Light Mana chip is already on that tile.  
+  ![image](https://github.com/kjniemela/kyo/assets/26636748/80f02afe-bbe7-4186-9415-07cf512e9431)
+  ![image](https://github.com/kjniemela/kyo/assets/26636748/20266e12-3292-42f4-8c1b-7558d736c5dd)
+  - In this example, the red pawn wants to move three steps up to the top corner, but it is unable to pick up gold's Light Mana and can't reach all the way. It isn't able to pick up its own Light Mana either, as the gold chip is covering it.  
+  ![image](https://github.com/kjniemela/kyo/assets/26636748/b34b4dfa-ffa0-4a63-b543-21aaf5f7bebd)
+  ![image](https://github.com/kjniemela/kyo/assets/26636748/37b7d354-4aa2-4136-a618-9ab0bdba4d49)
