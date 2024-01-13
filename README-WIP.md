@@ -31,7 +31,7 @@ There are four basic types of moves:
   - Making a direct move always ends your turn (except for Towers, which may always choose to make deploy moves at the end of their turn).
   - The whole stack slice can make a direct move together. A direct move can also be made with just the pawn on top of a stack slice, or with just the chips under the pawn, leaving the pawn behind.
 - ### "Mana" Moves
-  - If the player leaves behind a Mana chip of the correct color after making a move (Dark Mana for orthogonal moves, Light Mana for diagonal moves), this qualifies as a Mana move. (See more in the [Mana](#mana) section of this ruleset.)
+  - If the player leaves behind a Mana chip of the correct color after making a move (Dark Mana for orthogonal moves, Light Mana for diagonal moves), this qualifies as a [Mana](#mana) move.
   - After any Mana move, the player may choose to make another Mana move, if a legal Mana move is avaiable.
   - The player may **not** choose to make a direct move following a Mana move.
   - Only the Queen may make shuffle moves after a Mana move.
@@ -61,20 +61,26 @@ Some examples:
 - Here, gold has two pawns adjacent to the the target red pawn, but red has one pawn and one Mana chip next to the attacking gold pawn. This would prevent the gold pawn from attacking the red pawn. Note that the gold pawn would still be able to capture the red Mana chip, as the outnumbering requirement does not apply when attacking Mana.  
   ![image](https://github.com/kjniemela/kyo/assets/26636748/30fb07a8-8ec0-42c6-82d7-7401bdbd9251)
 
-
 ### Heavy Pawn
 ![goldpawn](/client/assets/pieces/goldpawn.png)
 ![redpawn](/client/assets/pieces/redpawn.png)  
+The Heavy Pawn (or just the "Heavy") is arguably the most useful pawn in all of Kyo. It doesn't have the limitations of the Light Pawn, being able to pick up to five Mana chips and attack whereever it can move. Each Heavy Pawn also starts with three Mana chips beneath it - whether those chips are Light or Dark Mana depends on where the pawn starts:  
+![image](https://github.com/kjniemela/kyo/assets/26636748/48f6fcfb-beab-45a4-9905-d07160cf144b)  
+
 ### Tower
 ![goldtower](/client/assets/pieces/goldtower.png)
 ![redtower](/client/assets/pieces/redtower.png)  
+The Tower has the unique ability of being able to move onto deployed [Shield](#shields) tokens, allowing them to both relocate your own defenses as well as disable the enemy's defenses. They are also the only pawn that can [Deploy Shields](#deploy-moves) without automatically ending their turn. Towers start with two Shields each.
+
 ### Queen
 ![goldqueen](/client/assets/pieces/goldqueen.png)
 ![redqueen](/client/assets/pieces/redqueen.png)  
+The Queen is the most versitile, and arguably the most powerful pawn in Kyo. Like other pawns, it can interact with Mana - but uniquely, it can [Reshuffle](#shuffle-moves) its stack at any time, and as many times as it wants. This allows it to completely reconfigure Mana roads it passes over, making it very hard for the enemy to predict where it will strike. The Queen starts with one Dark Mana, one Light Mana, and a Shield.
+
 ### King
 ![goldking](/client/assets/pieces/goldking.png)
 ![redking](/client/assets/pieces/redking.png)  
-
+The primary objective of Kyo is to capture the enemy king. The King has no special powers, but it does start with three Shields, more than any other pawn. Unlike Towers, though, it cannot reclaim its shields after deploying them.
 
 ## Mana
 Each player has Dark and Light Mana chips.  
@@ -87,7 +93,7 @@ Pawns moving over Mana (making a "Mana" move) obey the following rules:
 - The top Mana chip left behind after a pawn makes a move decides what type of Mana move to make:
   - If a Dark Mana chip was left behind, the move must be orthogonal.
   - If a Light Mana chip was left behind, the move must be diagonal.
-  - In the following example, the pawn starts by making a move straight up, leaving a Dark Mana chip behind. It then makes two consecutive, moves diagonally up and to the right, leaving a Light Mana chip behind each time.  
+  - In the following example, the pawn starts by making a move straight up, leaving a Dark Mana chip behind. It then makes two consecutive moves diagonally up and to the right, leaving a Light Mana chip behind each time.  
   ![image](https://github.com/kjniemela/kyo/assets/26636748/e35f1137-6848-417b-b13b-9efc88b80d70)
   ![image](https://github.com/kjniemela/kyo/assets/26636748/a208c2ed-0519-4cbb-90df-024382bfca19)
   ![image](https://github.com/kjniemela/kyo/assets/26636748/c3a811b7-a6a8-449f-9e09-5c7c1c620d21)
@@ -107,3 +113,6 @@ Pawns moving over Mana (making a "Mana" move) obey the following rules:
   - In this example, the red pawn wants to move three steps up to the top corner, but it is unable to pick up gold's Light Mana and can't reach all the way. It isn't able to pick up its own Light Mana either, as the gold chip is covering it.  
   ![image](https://github.com/kjniemela/kyo/assets/26636748/b34b4dfa-ffa0-4a63-b543-21aaf5f7bebd)
   ![image](https://github.com/kjniemela/kyo/assets/26636748/37b7d354-4aa2-4136-a618-9ab0bdba4d49)
+
+<!-- ## Shields -->
+
