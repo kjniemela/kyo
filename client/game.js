@@ -996,6 +996,8 @@ function resetBoard(clearBoard=false) {
   tiles = []
   isGoldsTurn = false
 
+  turnLog = []
+
   const appendFn = isPlayingGold ? 'prepend' : 'append'
 
   for (let i = 0; i < 10; i++) {
