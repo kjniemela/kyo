@@ -103,7 +103,7 @@ class Tile {
             )
           ) {
             // Light Pawns can only attack if they "outnumber" their opponent
-            if (selectedTopChip.type === 'lightpawn') {
+            if (selectedTopChip.type === 'lightpawn' && !(topChip instanceof Shield)) {
               const attackers = this.countAdjacent((stack) => stack.length && stack[stack.length-1].isGold === selectedTopChip.isGold)
               const defenders = selectedTile.countAdjacent((stack) => stack.length && stack[stack.length-1].isGold === topChip.isGold)
               if (attackers <= defenders) {
