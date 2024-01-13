@@ -7,15 +7,22 @@ body {
   --tile-size: min(5vw, 6.8vh);
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+h1 {
+  text-align: center;
+}
+
+.page {
   margin: 10px;
   padding: 20px;
   border: 1px solid black;
   border-radius: 5px;
   background-color: antiquewhite;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 #turn {
@@ -78,6 +85,7 @@ body {
   background-color: dodgerblue;
   color: whitesmoke;
   min-width: 48px;
+  text-decoration: none;
 }
 .btn:hover {
   background-color: rgb(52, 154, 255);
