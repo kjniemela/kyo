@@ -1,8 +1,10 @@
 # Kyo
 ![image](https://github.com/kjniemela/kyo/assets/26636748/fe81c1e3-906c-49a5-a074-377e07aa918d)
-Kyo is a board game inspired by Chess.
-# Rules
+Kyo is a board game inspired by Chess. It was initally just used as an alternative name for Chess in a fantasy universe, but it slowly developed into a game in its own right. This is a browser-based implementation of the game: it can be played at [playkyo.com](https://www.playkyo.com).
 
+If you find something broken, or just anything that doesn't seem to be quite right, both with the game and with this ruleset, please [open a ticket](https://github.com/kjniemela/kyo/issues/new/choose).
+
+# Rules
 Kyo is played on a 10 by 10 checkered board, and the game is won by either capturing the enemy King or destroying all the enemy's Mana.
 There are two types of pieces in Kyo, which each have several subtypes:
 - ### Pawns 
@@ -45,6 +47,8 @@ There are four basic types of moves:
   - More than one shield may be deployed at once.
   - For any pawn except the Tower, a deploy move is equivalent to making a direct move with a stack slice containing the shield, meaning the turn ends.
   - Towers, however, may make deploy moves at any time without ending their turn.
+
+<!-- ## Setup -->
 
 ## Pawns
 
