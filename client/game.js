@@ -414,8 +414,7 @@ class Tile {
     const topPawn = this.pawnStack[this.pawnStack.length - 1]
     for (let i = 0; i < pawnCount; i++) {
       if (isStrike && (
-        this.pawnStack[this.pawnStack.length - 1].isGold !== topPawn.isGold ||
-        this.pawnStack[this.pawnStack.length - 1] instanceof Shield
+        this.pawnStack[this.pawnStack.length - 1].isGold !== topPawn.isGold
       )) {
         break
       }
