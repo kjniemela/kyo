@@ -2,6 +2,7 @@ let selectedTile = null
 let path = []
 let hasMoved = false
 let hasShuffled = false
+let deployMode = false
 
 let tiles = []
 let isGoldsTurn = false
@@ -32,8 +33,8 @@ class Tile {
   }
 
   onClick(e) {
-    const topChip = this.pawnStack[this.pawnStack.length-1]
-    const selectedTopChip = selectedTile?.pawnStack[selectedTile?.pawnStack.length-1]
+    const topChip = this.getTop()
+    const selectedTopChip = selectedTile?.getTop()
 
     // If we're in a multiplayer game and it is not our turn, we should not be able to move any pawns.
     if (isRemoteGame && isPlayingGold !== isGoldsTurn) {
@@ -45,6 +46,11 @@ class Tile {
       (this.pawnStack.length > 0 && topChip.isGold !== isGoldsTurn) || this.pawnStack.length === 0
     ) && !selectedTile) {
       return
+    }
+
+    // If we do not have a tower selected, we cannot be in deploy mode.
+    if (deployMode && (!selectedTopChip || !(selectedTopChip instanceof Tower))) {
+      deployMode = false
     }
 
     // If we have a stack selected:
@@ -66,7 +72,8 @@ class Tile {
       else {
         // Otherwise, check if the move would be valid.
         if (selectedTile.canMoveTo(this.x, this.y)) {
-          if ((hasMoved || hasShuffled) && !isReturning) return // If we have already moved or shuffled, and this is not an undo, return.
+          // If we have already moved or shuffled, and this is not an undo or we are in deploy mode, return.
+          if ((hasMoved || hasShuffled) && !isReturning && !deployMode) return
           if (isReturning) {
             path.pop()
             hasMoved = false
@@ -75,7 +82,7 @@ class Tile {
             // If this move does not satisfy the rules for a "free" move, make sure we won't get to move again.
             const isFreeMove = selectedTile.isFreeMove(this.x, this.y)
             if (!isFreeMove) {
-              if (path.length > 0) return
+              if (path.length > 0 && !deployMode) return
               hasMoved = true
             }
           }
@@ -130,6 +137,15 @@ class Tile {
                 suspendedSelectedTopPawn.unlift()
                 suspendedTopPawn = this.popPawn()
                 suspendedTopPawn.lift()
+                // Shields may not be deployed in this way.
+                if (selectedTile.getTop() instanceof Shield) {
+                  selectedTile.pushPawn(suspendedSelectedTopPawn)
+                  suspendedSelectedTopPawn.lift()
+                  this.pushPawn(suspendedTopPawn)
+                  suspendedTopPawn.unlift()
+                  hasMoved = false
+                  return
+                }
               }
               // In any other case, if there are pawns on both tiles, we must have somehow made an illegal move.
               // The only exception is if we're a tower moving onto a shield.
@@ -147,6 +163,21 @@ class Tile {
           for (let i = 0; i < selectedPawns; i++) {
             movedPawns.push(selectedTile.popPawn())
           }
+
+          let isDeployMove = false
+          if (suspendedSelectedTopPawn instanceof Tower && movedPawns.every(pawn => pawn instanceof Shield)) {
+            isDeployMove = true
+          }
+
+          if (deployMode && !isDeployMove) {
+            if (suspendedSelectedTopPawn) selectedTile.pushPawn(suspendedSelectedTopPawn)
+            if (suspendedTopPawn) this.pushPawn(suspendedTopPawn)
+            for (let i = selectedPawns - 1; i >= 0; i--) {
+              selectedTile.pushPawn(movedPawns[i])
+            }
+            return
+          }
+
           for (let i = selectedPawns - 1; i >= 0; i--) {
             this.pushPawn(movedPawns[i])
           }
@@ -159,19 +190,36 @@ class Tile {
           let isShootOutMove = false
           if (suspendedSelectedTopPawn) {
             isShootOutMove = true
+
+            // If only shields were "shot out" from a Tower, this is a Deploy move and the Tower may keep moving.
+            if (isDeployMove) {
+              deployMode = true
+              suspendedSelectedTopPawn.lift()
+              this.pawnStack.forEach(pawn => pawn.unlift())
+            }
+
             selectedTile.pushPawn(suspendedSelectedTopPawn)
+          }
+
+          if (!isDeployMove && this.getTop() instanceof Tower) {
+            deployMode = true
           }
 
           // Add the selected tile to the path.
           if (!isReturning) path.push([
-            selectedTile,
+            isDeployMove ? this : selectedTile,
             selectedPawns-1,
             availableEnergy,
             isFreeMove,
-            isShootOutMove,
+            isShootOutMove && !isDeployMove,
+            isDeployMove,
           ])
-          selectedTile = this
-          if (didStrike || e.ctrlKey) this.deselect()
+          if (!isDeployMove) {
+            selectedTile = this
+            if (didStrike || e.ctrlKey) {
+              this.deselect()
+            }
+          }
           return
         }
         // If we made a move that would clearly not be valid, return if we have already moved,
@@ -375,6 +423,10 @@ class Tile {
     return true
   }
 
+  getTop() {
+    return this.pawnStack.length ? this.pawnStack[this.pawnStack.length-1] : null
+  }
+
   pushPawn(pawn) {
     if (this.pawnStack.length === 0) {
       pawn.setBottom(true)
@@ -570,6 +622,7 @@ function passTurn() {
   path = []
   hasMoved = false
   hasShuffled = false
+  deployMode = false
   document.getElementById('turn').innerText = `${isGoldsTurn ? 'Gold' : 'Red'} is taking their turn...`
   renderTurnLog()
   if (!isRemoteGame) {
@@ -895,7 +948,13 @@ function renderTurnLog() {
     const item = document.createElement('li')
     item.classList.add('logItem')
     let shuffle = null
-    item.innerText = path.map(([x, y, carry, leave, free, shoot]) => {
+    let deploys = []
+    item.innerText = path.map(([x, y, carry, leave, free, shoot, deploy]) => {
+      console.log([x, y, carry, leave, free, shoot, deploy])
+      if (deploy) {
+        deploys.push([x, y, carry+1])
+        return
+      }
       if (x === 'shuffle') {
         shuffle = `↺${y.map(val => val ? '▮': '▯').join('')}`
         return
@@ -905,7 +964,11 @@ function renderTurnLog() {
         coord = `${coord} ${shuffle}`
         shuffle = null
       }
-      if (carry === undefined) return coord
+      const deployStr = deploys.map(([deployX, deployY, deployAmount]) => {
+        const symbol = deployAmount > 1 ? `⎯${deployAmount}⇥` : '⇥'
+        return ` ${symbol} ${toAlphabet(deployX)}${deployY}`
+      }).join('')
+      if (carry === undefined) return coord + deployStr
       if (free) {
         if (leave === 1) {
           return `${coord} →`
@@ -916,8 +979,8 @@ function renderTurnLog() {
       }
       else {
         const symbol = shoot ? '⇏' : '⇒'
-        if (leave) return `${coord} =${leave}${symbol}`
-        else return `${coord} ${symbol}`
+        if (leave) return `${coord}${deployStr} =${leave}${symbol}`
+        else return `${coord}${deployStr} ${symbol}`
       }
     }).join(' ')
     list.appendChild(item)
