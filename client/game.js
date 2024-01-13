@@ -420,7 +420,7 @@ class Tile {
       }
       const poppedPawn = this.popPawn()
       if (isStrike && poppedPawn instanceof Shield && i === 0) {
-        return this.pawnStack.length === 0
+        return false
       }
     }
     return true
