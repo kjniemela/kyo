@@ -398,7 +398,7 @@ class Tile {
         const [, carry] = path[path.length - 1]
         for (let i = this.pawnStack.length - carry - 2; i >= 0; i--) {
           const chip = this.pawnStack[i]
-          if (chip.isGold === topPawn.isGold) break
+          if (chip.isGold === topPawn.isGold || chip instanceof Shield) break
           this.splicePawn(i)
         }
       }
@@ -409,7 +409,6 @@ class Tile {
   }
 
   clear(isStrike=false) {
-    console.log('STRIKE: ', isStrike)
     const pawnCount = this.pawnStack.length;
     const topPawn = this.pawnStack[this.pawnStack.length - 1]
     for (let i = 0; i < pawnCount; i++) {
