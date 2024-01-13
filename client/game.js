@@ -887,9 +887,9 @@ function openSettings() {
   const dialog = document.getElementById('dialog');
 
   const startPosDescs = {
-    rear: 'The Pawns start lined up on rows 1 and 8, directly in front of the Heavies.',
-    middle: 'The Pawns start lined up on rows 3 and 6, leaving a no man\'s land in between.',
-    front: 'The Pawns start lined up on rows 4 and 5, directly facing each other.',
+    rear: 'The Light Pawns start lined up on rows 1 and 8, directly in front of the Heavy Pawns.',
+    middle: 'The Light Pawns start lined up on rows 3 and 6, leaving a no man\'s land in between.',
+    front: 'The Light Pawns start lined up on rows 4 and 5, directly facing each other.',
   };
 
   dialog.innerHTML = '';
@@ -898,12 +898,12 @@ function openSettings() {
     'flex-column',
     'gap-1',
   ], children: [
-    createSelect('ruleset', 'Ruleset:', [
-      ['classic', 'Classic Kyo'],
-      ['new', 'New Kyo'],
-    ], config.ruleset, (value) => {
-      config.ruleset = value;
-    }),
+    // createSelect('ruleset', 'Ruleset:', [
+    //   ['classic', 'Classic Kyo'],
+    //   ['new', 'New Kyo'],
+    // ], config.ruleset, (value) => {
+    //   config.ruleset = value;
+    // }),
     createSelect('startPos', 'Starting Positions:', [
       ['rear', 'Open Field'],
       ['middle', 'Trench'],
