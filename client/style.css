@@ -24,6 +24,9 @@ h1 {
   align-items: center;
   gap: 10px;
 }
+.itch .header {
+  font-size: 13px;
+}
 
 #turn {
   display: inline;
@@ -86,6 +89,7 @@ h1 {
   color: whitesmoke;
   min-width: 48px;
   text-decoration: none;
+  white-space: nowrap;
 }
 .btn:hover {
   background-color: rgb(52, 154, 255);

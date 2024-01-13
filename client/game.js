@@ -823,7 +823,8 @@ function textDialog(lines, okBtnText) {
 }
 
 async function joinNewGame(gameID) {
-  const URL = `https://${location.host}${location.pathname}#${gameID}`;
+  const URL = `https://playkyo.com#${gameID}`;
+  const redirectURL = `https://${location.host}${location.pathname}#${gameID}`;
 
   await new Promise((resolve, reject) => {
     const dialogShadow = document.getElementById('dialogShadow');
@@ -851,7 +852,7 @@ async function joinNewGame(gameID) {
     dialogShadow.classList.remove('hidden');
   });
 
-  location.href = URL;
+  location.href = redirectURL;
   sendActions([['connect', [gameID]]])
 }
 
